@@ -156,12 +156,12 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1366 | 80 packages, race-tested, enterprise patterns |
+| golib | 1470 | 86 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,243** | |
+| **Total** | **2,347** | |
 
-## golib Shared Library (80 packages)
+## golib Shared Library (86 packages)
 
 ### Security (10 packages)
 | Package | Purpose |
@@ -177,22 +177,25 @@ External Request
 | `pii` | AES-256-GCM field encryption, masking, hash lookup |
 | `sanitize` | XSS, SQL injection, path traversal protection |
 
-### Resilience (8 packages)
+### Resilience (10 packages)
 | Package | Purpose |
 |---------|---------|
 | `adaptive` | Error-rate-aware throttle with auto backoff/recovery |
+| `backpressure` | System-level load shedding with priority admission control |
 | `budget` | Time and call-count budget enforcement |
 | `bulkhead` | Semaphore-based concurrency isolation |
 | `circuitbreaker` | Fault isolation with advanced half-open probing |
+| `connpool` | Generic connection pool with health check, lifetime, idle timeout |
 | `distlock` | Distributed mutex with fencing tokens |
 | `ratelimit` | Token bucket + sliding window rate limiter |
 | `resilience` | Fallback[T], Retry[T] with exponential backoff |
 | `singleflight` | Request coalescing for duplicate suppression |
 
-### Observability (8 packages)
+### Observability (9 packages)
 | Package | Purpose |
 |---------|---------|
 | `accesslog` | Request latency percentile tracking (p50/p95/p99) |
+| `correlation` | Structured correlation/causation ID propagation across services |
 | `depcheck` | Concurrent dependency health checking |
 | `healthgraph` | Service dependency DAG with cascade analysis |
 | `logging` | Structured logger with PII redaction and sampling |
@@ -214,11 +217,13 @@ External Request
 | `respwriter` | Response writer wrappers (Capture, Buffer, Pool) |
 | `webhook` | Ed25519 webhook signing (v2) |
 
-### Data Management (8 packages)
+### Data Management (10 packages)
 | Package | Purpose |
 |---------|---------|
 | `audittrail` | Fluent audit entry builder with 13 action types |
 | `cqrs` | Command/query separation with bus dispatchers |
+| `dedup` | Exactly-once processing with content-hash deduplication |
+| `envelope` | Standardized event envelope for Kafka with routing, retry, integrity |
 | `eventsource` | Event sourcing with aggregate, snapshot, repository |
 | `idempotent` | Request deduplication with idempotency keys |
 | `lineage` | Data flow tracking for UU PDP compliance |
@@ -268,3 +273,8 @@ External Request
 | `validate` | Input validation (NIK, email, UUID, password strength) |
 | `worker` | Generic worker pool for background tasks |
 | `workqueue` | Priority work queue with backpressure |
+
+### SLA & Compliance (1 package)
+| Package | Purpose |
+|---------|---------|
+| `sla` | SLA monitoring with error budget tracking and burn rate analysis |
