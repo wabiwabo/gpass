@@ -217,6 +217,74 @@ services:
     networks:
       - gpass-network
 
+  ahu-sim:
+    build: ./services/ahu-sim
+    restart: unless-stopped
+    ports:
+      - "4004:4004"
+    environment:
+      AHU_SIM_PORT: "4004"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
+  oss-sim:
+    build: ./services/oss-sim
+    restart: unless-stopped
+    ports:
+      - "4005:4005"
+    environment:
+      OSS_SIM_PORT: "4005"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
+  garudacorp:
+    build: ./services/garudacorp
+    restart: unless-stopped
+    ports:
+      - "4006:4006"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ahu-sim:
+        condition: service_started
+      oss-sim:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
 volumes:
   pgdata:
 
