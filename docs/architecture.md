@@ -156,29 +156,31 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1767 | 109 packages, race-tested, enterprise patterns |
+| golib | 1836 | 114 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,703** | |
+| **Total** | **2,772** | |
 
-## golib Shared Library (109 packages)
+## golib Shared Library (114 packages)
 
-### Security (11 packages)
+### Security (13 packages)
 | Package | Purpose |
 |---------|---------|
 | `crypto` | HMAC-SHA256, random bytes, multi-version KeyRing |
 | `cryptoutil` | Constant-time comparison, HMAC, key derivation, secure random |
 | `digest` | SHA-256/384/512, CRC32, file hashing, multi-hash verification |
 | `fingerprint` | Request fingerprinting for bot/abuse detection |
+| `ipallow` | IP allowlist/blocklist with CIDR ranges and HTTP middleware |
 | `jwt` | ECDSA P-256 JWT signing/verification, JWKS endpoint |
 | `kms` | Envelope encryption (DEK/KEK) with local provider |
 | `mask` | Indonesian PII masking (NIK, email, phone, NPWP) |
 | `mtls` | Mutual TLS client with test certificate generation |
 | `permission` | Scope-based access control with role hierarchy |
 | `pii` | AES-256-GCM field encryption, masking, hash lookup |
+| `reqsign` | HMAC request signing for service-to-service authentication |
 | `sanitize` | XSS, SQL injection, path traversal protection |
 
-### Resilience (14 packages)
+### Resilience (17 packages)
 | Package | Purpose |
 |---------|---------|
 | `adaptive` | Error-rate-aware throttle with auto backoff/recovery |
@@ -188,13 +190,16 @@ External Request
 | `cascade` | Cascading fallback for multi-source data (cache→db→API) |
 | `circuitbreaker` | Fault isolation with advanced half-open probing |
 | `circuithttp` | Circuit-breaker-aware HTTP transport with state callbacks |
+| `circuitstate` | Circuit breaker state persistence for restart resilience |
 | `connpool` | Generic connection pool with health check, lifetime, idle timeout |
+| `drain` | Graceful connection draining for zero-downtime deploys |
 | `distlock` | Distributed mutex with fencing tokens |
 | `ratelimit` | Token bucket + sliding window rate limiter |
 | `resilience` | Fallback[T], Retry[T] with exponential backoff |
 | `semaphore` | Weighted counting semaphore with context cancellation |
 | `singleflight` | Request coalescing for duplicate suppression |
 | `throttle` | Per-key token bucket rate limiter with HTTP middleware |
+| `webhookretry` | Exponential backoff retry for webhook delivery |
 
 ### Observability (13 packages)
 | Package | Purpose |
