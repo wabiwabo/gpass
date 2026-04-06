@@ -33,6 +33,8 @@ type DeliveryStore interface {
 	GetByID(id string) (*WebhookDelivery, error)
 	UpdateStatus(id, status string, responseCode int, responseBody string, nextRetryAt *time.Time) error
 	ListPending() ([]*WebhookDelivery, error)
+	ListBySubscription(subscriptionID string, status string, limit int) ([]*WebhookDelivery, error)
+	ResetForReplay(id string) error
 }
 
 // InMemoryDeliveryStore is a thread-safe in-memory implementation of DeliveryStore.
@@ -115,6 +117,48 @@ func (s *InMemoryDeliveryStore) UpdateStatus(id, status string, responseCode int
 		d.DeliveredAt = &now
 	}
 
+	return nil
+}
+
+// ListBySubscription returns deliveries for a subscription, optionally filtered by status.
+func (s *InMemoryDeliveryStore) ListBySubscription(subscriptionID string, status string, limit int) ([]*WebhookDelivery, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if limit <= 0 {
+		limit = 20
+	}
+
+	var result []*WebhookDelivery
+	for _, d := range s.deliveries {
+		if d.SubscriptionID != subscriptionID {
+			continue
+		}
+		if status != "" && d.Status != status {
+			continue
+		}
+		result = append(result, copyDelivery(d))
+		if len(result) >= limit {
+			break
+		}
+	}
+	return result, nil
+}
+
+// ResetForReplay resets a delivery's status to PENDING and attempts to 0 for replay.
+func (s *InMemoryDeliveryStore) ResetForReplay(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	d, ok := s.deliveries[id]
+	if !ok {
+		return ErrDeliveryNotFound
+	}
+
+	d.Status = "PENDING"
+	d.Attempts = 0
+	d.NextRetryAt = nil
+	d.DeliveredAt = nil
 	return nil
 }
 
