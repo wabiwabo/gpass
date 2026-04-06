@@ -8,4 +8,5 @@ use (
 	./services/identity
 	./services/oss-sim
 	./services/garudacorp
+	./services/signing-sim
 )
