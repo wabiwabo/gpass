@@ -81,3 +81,25 @@ func (b *Breaker) State() string {
 	defer b.mu.Unlock()
 	return b.state
 }
+
+// FailureCount returns the current failure count.
+func (b *Breaker) FailureCount() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.failures
+}
+
+// Threshold returns the failure threshold.
+func (b *Breaker) Threshold() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.threshold
+}
+
+// OpenedAt returns the time when the circuit breaker was last opened.
+// Returns zero time if the breaker has never been opened.
+func (b *Breaker) OpenedAt() time.Time {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.openedAt
+}
