@@ -22,8 +22,9 @@ type EmailMessage struct {
 
 // MockEmailSender is an in-memory email sender for testing.
 type MockEmailSender struct {
-	Sent []EmailMessage
-	mu   sync.Mutex
+	Sent       []EmailMessage
+	FailOnSend bool // If true, Send returns an error.
+	mu         sync.Mutex
 }
 
 // NewMockEmailSender creates a new MockEmailSender.
@@ -33,6 +34,9 @@ func NewMockEmailSender() *MockEmailSender {
 
 // Send records the email message. Returns an error if to or subject is empty.
 func (m *MockEmailSender) Send(_ context.Context, to, subject, body string) error {
+	if m.FailOnSend {
+		return errors.New("mock email send failure")
+	}
 	if to == "" {
 		return errors.New("recipient (to) is required")
 	}

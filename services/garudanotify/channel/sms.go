@@ -22,8 +22,9 @@ type SMSMessage struct {
 
 // MockSMSSender is an in-memory SMS sender for testing.
 type MockSMSSender struct {
-	Sent []SMSMessage
-	mu   sync.Mutex
+	Sent       []SMSMessage
+	FailOnSend bool // If true, Send returns an error.
+	mu         sync.Mutex
 }
 
 // NewMockSMSSender creates a new MockSMSSender.
@@ -33,6 +34,9 @@ func NewMockSMSSender() *MockSMSSender {
 
 // Send records the SMS message. Validates that phone number starts with +62.
 func (m *MockSMSSender) Send(_ context.Context, phoneNumber, message string) error {
+	if m.FailOnSend {
+		return errors.New("mock SMS send failure")
+	}
 	if phoneNumber == "" {
 		return errors.New("phone number is required")
 	}
