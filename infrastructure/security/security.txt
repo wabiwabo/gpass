@@ -1,0 +1,10 @@
+# GarudaPass Security Policy
+# https://securitytxt.org/
+
+Contact: mailto:security@garudapass.id
+Expires: 2027-04-06T00:00:00.000Z
+Encryption: https://garudapass.id/.well-known/pgp-key.txt
+Acknowledgments: https://garudapass.id/security/acknowledgments
+Preferred-Languages: id, en
+Canonical: https://garudapass.id/.well-known/security.txt
+Policy: https://garudapass.id/security/policy

@@ -22,18 +22,24 @@ services:
         strip_path: false
 
 plugins:
+  # Rate limiting per route
   - name: rate-limiting
     config:
       minute: 60
       policy: local
+      fault_tolerant: true
+      hide_client_headers: false
     route: bff-auth-routes
 
   - name: rate-limiting
     config:
       minute: 300
       policy: local
+      fault_tolerant: true
+      hide_client_headers: false
     route: bff-api-routes
 
+  # CORS (dev origins — override in production)
   - name: cors
     config:
       origins:
@@ -43,16 +49,47 @@ plugins:
         - GET
         - POST
         - PUT
+        - PATCH
         - DELETE
         - OPTIONS
       headers:
         - Content-Type
         - Authorization
+        - X-API-Key
         - X-CSRF-Token
+        - X-Request-Id
       credentials: true
-      max_age: 3600
+      max_age: 86400
 
+  # Request size limiting
   - name: request-size-limiting
     config:
       allowed_payload_size: 10
       size_unit: megabytes
+
+  # Security response headers (global)
+  - name: response-transformer
+    config:
+      add:
+        headers:
+          - "X-Content-Type-Options: nosniff"
+          - "X-Frame-Options: DENY"
+          - "X-XSS-Protection: 0"
+          - "Referrer-Policy: strict-origin-when-cross-origin"
+          - "Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()"
+          - "Content-Security-Policy: default-src 'none'; frame-ancestors 'none'"
+
+  # IP restriction for internal routes (disabled by default)
+  # - name: ip-restriction
+  #   config:
+  #     allow:
+  #       - 10.0.0.0/8
+  #       - 172.16.0.0/12
+  #   route: internal-routes
+
+  # Bot detection
+  - name: bot-detection
+    config:
+      deny:
+        - "Scrapy"
+        - "python-requests"
