@@ -12,5 +12,6 @@ use (
 	./services/signing-sim
 	./services/garudasign
 	./services/garudaportal
+	./services/garudaaudit
 	./tests/integration
 )
