@@ -156,12 +156,12 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1470 | 86 packages, race-tested, enterprise patterns |
+| golib | 1727 | 100 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,347** | |
+| **Total** | **2,604** | |
 
-## golib Shared Library (86 packages)
+## golib Shared Library (100 packages)
 
 ### Security (10 packages)
 | Package | Purpose |
@@ -177,43 +177,52 @@ External Request
 | `pii` | AES-256-GCM field encryption, masking, hash lookup |
 | `sanitize` | XSS, SQL injection, path traversal protection |
 
-### Resilience (10 packages)
+### Resilience (14 packages)
 | Package | Purpose |
 |---------|---------|
 | `adaptive` | Error-rate-aware throttle with auto backoff/recovery |
 | `backpressure` | System-level load shedding with priority admission control |
 | `budget` | Time and call-count budget enforcement |
 | `bulkhead` | Semaphore-based concurrency isolation |
+| `cascade` | Cascading fallback for multi-source data (cache→db→API) |
 | `circuitbreaker` | Fault isolation with advanced half-open probing |
+| `circuithttp` | Circuit-breaker-aware HTTP transport with state callbacks |
 | `connpool` | Generic connection pool with health check, lifetime, idle timeout |
 | `distlock` | Distributed mutex with fencing tokens |
 | `ratelimit` | Token bucket + sliding window rate limiter |
 | `resilience` | Fallback[T], Retry[T] with exponential backoff |
+| `semaphore` | Weighted counting semaphore with context cancellation |
 | `singleflight` | Request coalescing for duplicate suppression |
+| `throttle` | Per-key token bucket rate limiter with HTTP middleware |
 
-### Observability (9 packages)
+### Observability (13 packages)
 | Package | Purpose |
 |---------|---------|
 | `accesslog` | Request latency percentile tracking (p50/p95/p99) |
 | `correlation` | Structured correlation/causation ID propagation across services |
 | `depcheck` | Concurrent dependency health checking |
+| `healthagg` | Health aggregation across services with caching and HTTP handler |
 | `healthgraph` | Service dependency DAG with cascade analysis |
 | `logging` | Structured logger with PII redaction and sampling |
 | `metrics` | Prometheus-compatible HTTP metrics middleware |
 | `probe` | K8s liveness/readiness/startup probe manager |
+| `ratewindow` | Fixed-window event counting for monitoring/analytics |
+| `reqlog` | Structured HTTP request/response logging with PII filtering |
+| `statuspage` | Service status page with components, incidents, maintenance |
 | `tags` | Thread-safe observability tag propagation |
 | `tracing` | W3C Trace Context with span tracking |
 
-### API Standards (9 packages)
+### API Standards (10 packages)
 | Package | Purpose |
 |---------|---------|
 | `apiresponse` | RFC 7807 Problem Details responses |
 | `cursor` | Opaque cursor-based pagination with generics |
 | `httputil` | JSON, pagination, filtering, batch API, versioned router |
 | `negotiate` | HTTP content negotiation (Accept, Encoding, Language) |
+| `paginatedb` | SQL pagination helpers for offset and keyset pagination |
 | `pagination` | Offset-based pagination with generics Apply[T] |
 | `rateheader` | IETF RateLimit-* header utilities |
-| `reqvalidator` | Structured request validation with field errors |
+| `reqvalidator` | Structured request validation (11 patterns: email, NIK, NPWP, etc.) |
 | `respwriter` | Response writer wrappers (Capture, Buffer, Pool) |
 | `webhook` | Ed25519 webhook signing (v2) |
 
@@ -231,25 +240,30 @@ External Request
 | `retention` | PP 71/2019 and UU PDP retention policy enforcer |
 | `seeddata` | JSON seed data loader with dependency ordering |
 
-### Infrastructure (17 packages)
+### Infrastructure (21 packages)
 | Package | Purpose |
 |---------|---------|
 | `audit` | Audit context enrichment, IP extraction |
 | `batch` | Generic concurrent batch processing |
+| `bloom` | Probabilistic set membership for dedup at scale |
 | `bootstrap` | Standardized service startup with middleware chain |
 | `cache` | TTL cache with GetOrSet, stats |
 | `config` | Runtime config values with atomic swap |
 | `configloader` | Struct-tag config loading from env vars |
+| `contextutil` | Context helpers: Detach, Merge, deadline splitting |
 | `database` | PostgreSQL pool, transactions, migrations, query builder |
 | `environ` | Typed environment variable helpers |
 | `errors` | Structured errors with stack traces, 30+ codes |
 | `events` | Event bus abstraction (LogPublisher, MemoryBus) |
 | `health` | Concurrent health checks, IETF format |
 | `httpclient` | HTTP client with circuit breaker, request signing |
+| `iterset` | Generic set operations (union, intersection, difference) |
 | `redis` | Redis client with health checking |
 | `requestid` | Request ID generation and middleware |
+| `safemap` | Type-safe concurrent map with TTL and generics |
 | `server` | Graceful shutdown server with connection draining |
 | `shutdown` | Shutdown coordinator with priority-ordered hooks |
+| `signctx` | Signal-aware context for graceful shutdown propagation |
 | `token` | Cryptographic token generation (hex, base62, UUID, OTP) |
 
 ### Domain (10 packages)

@@ -77,13 +77,13 @@ All notable changes to GarudaPass are documented in this file.
 - 5-year retention policy enforcement
 - Notification service (email + SMS channels)
 
-### Shared Library (golib — 86 packages)
+### Shared Library (golib — 100 packages)
 - **Security (10):** KMS envelope encryption, JWT ES256, permissions, fingerprinting, PII masking, digest hashing, mTLS, sanitization
-- **Resilience (10):** Circuit breaker, bulkhead, singleflight, adaptive throttle, distributed lock, sliding window rate limiter, retry/fallback, request budget, backpressure/load shedding, generic connection pooling
-- **Observability (9):** W3C tracing, access log percentiles, dependency checks, health graphs, K8s probes, log sampling, metrics, tags, correlation ID propagation
-- **API Standards (9):** RFC 7807 responses, cursor pagination, content negotiation, rate limit headers, request validation, response writers
+- **Resilience (14):** Circuit breaker, bulkhead, singleflight, adaptive throttle, distributed lock, sliding window rate limiter, retry/fallback, request budget, backpressure/load shedding, generic connection pooling, cascading fallback, circuit-breaker HTTP transport, weighted semaphore, per-key throttle
+- **Observability (13):** W3C tracing, access log percentiles, dependency checks, health graphs, K8s probes, log sampling, metrics, tags, correlation ID propagation, health aggregation, request logging, rate windows, status page
+- **API Standards (10):** RFC 7807 responses, cursor pagination, content negotiation, rate limit headers, request validation (11 patterns), response writers, SQL pagination helpers
 - **Data Management (10):** Transactional outbox, event sourcing, CQRS, idempotency, retention enforcement, audit trail, data lineage, seed data, exactly-once dedup, event envelope with routing/retry
-- **Infrastructure (17):** Graceful shutdown, config loader, environment helpers, request IDs, tokens, batch processing, caching, events, health checks
+- **Infrastructure (21):** Graceful shutdown, config loader, environment helpers, request IDs, tokens, batch processing, caching, events, health checks, bloom filter, context utils, generic sets, safe concurrent maps, signal-aware context
 - **Domain (20):** Middleware (25+ types), OAuth2/OIDC, ABAC policy, feature flags, chaos engineering, contract testing, multi-tenancy, Indonesian timezone support
 - **SLA & Compliance (1):** SLA monitoring with error budget tracking and burn rate analysis
 
@@ -98,9 +98,9 @@ All notable changes to GarudaPass are documented in this file.
 - 6 OpenAPI 3.1 specifications
 
 ### Metrics
-- 2,347 Go tests across all modules (race-detector verified)
-- 180+ conventional commits
-- 95,000+ lines of Go code
-- 540+ Go files, 254+ test files
+- 2,604 Go tests across all modules (race-detector verified)
+- 190+ conventional commits
+- 105,000+ lines of Go code
+- 570+ Go files, 285+ test files
 - 12 Go services + 2 Next.js apps + 4 simulators
-- 86 shared library packages (zero external dependencies)
+- 100 shared library packages (zero external dependencies)
