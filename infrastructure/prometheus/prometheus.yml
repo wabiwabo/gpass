@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: "garudapass-services"
+    static_configs:
+      - targets:
+          - "bff:4000"
+          - "identity:4001"
+          - "garudainfo:4003"
+          - "garudacorp:4006"
+          - "garudasign:4007"
+          - "garudaportal:4009"
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  - job_name: "simulators"
+    static_configs:
+      - targets:
+          - "dukcapil-sim:4002"
+          - "ahu-sim:4004"
+          - "oss-sim:4005"
+          - "signing-sim:4008"
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  - job_name: "infrastructure"
+    static_configs:
+      - targets:
+          - "prometheus:9090"
+    metrics_path: /metrics
