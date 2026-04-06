@@ -1,0 +1,46 @@
+version: 2
+
+updates:
+  - package-ecosystem: gomod
+    directory: /apps/bff
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - go
+    commit-message:
+      prefix: "deps(go):"
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: "deps(npm):"
+
+  - package-ecosystem: docker
+    directory: /apps/bff
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: "deps(docker):"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "deps(ci):"

@@ -1,0 +1,35 @@
+run:
+  timeout: 3m
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - bodyclose
+    - gosec
+    - noctx
+    - exportloopref
+
+linters-settings:
+  gosec:
+    excludes:
+      - G104  # Allow unhandled errors in deferred Close() calls
+    config:
+      global:
+        audit: true
+
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment  # Not critical for correctness
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec  # Security checks less relevant in tests
+        - errcheck
