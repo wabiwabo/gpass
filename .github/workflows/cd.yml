@@ -1,0 +1,171 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write  # OIDC for AWS
+
+env:
+  AWS_REGION: ap-southeast-1
+
+jobs:
+  determine-environment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - id: env
+        env:
+          GIT_REF: ${{ github.ref }}
+        run: |
+          if [[ "$GIT_REF" == refs/tags/v* ]]; then
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - id: version
+        env:
+          GIT_REF_NAME: ${{ github.ref_name }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          if [[ "$GIT_REF_NAME" == v* ]]; then
+            echo "version=${GIT_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=sha-${GIT_SHA::8}" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-push:
+    name: Build & Push
+    runs-on: ubuntu-latest
+    needs: [determine-environment]
+    strategy:
+      matrix:
+        service:
+          - { dir: "apps/bff", name: "bff" }
+          - { dir: "services/identity", name: "identity" }
+          - { dir: "services/garudainfo", name: "garudainfo" }
+          - { dir: "services/garudacorp", name: "garudacorp" }
+          - { dir: "services/garudasign", name: "garudasign" }
+          - { dir: "services/garudaportal", name: "garudaportal" }
+          - { dir: "services/garudaaudit", name: "garudaaudit" }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          VERSION: ${{ needs.determine-environment.outputs.version }}
+          GIT_SHA: ${{ github.sha }}
+          SERVICE_DIR: ${{ matrix.service.dir }}
+          SERVICE_NAME: ${{ matrix.service.name }}
+        run: |
+          IMAGE="${ECR_REGISTRY}/garudapass/${SERVICE_NAME}"
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          docker build \
+            --build-arg VERSION="${VERSION}" \
+            --build-arg COMMIT="${GIT_SHA::8}" \
+            --build-arg BUILD_TIME="${BUILD_TIME}" \
+            -t "${IMAGE}:${VERSION}" \
+            -t "${IMAGE}:latest" \
+            "${SERVICE_DIR}"
+          docker push "${IMAGE}:${VERSION}"
+          docker push "${IMAGE}:latest"
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [determine-environment, build-and-push]
+    if: needs.determine-environment.outputs.environment == 'staging'
+    environment: staging
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name garudapass-staging --region "${AWS_REGION}"
+
+      - name: Deploy with Kustomize
+        env:
+          VERSION: ${{ needs.determine-environment.outputs.version }}
+        run: |
+          cd infrastructure/kubernetes
+          kustomize build overlays/staging | \
+            sed "s|:latest|:${VERSION}|g" | \
+            kubectl apply -f -
+
+      - name: Wait for rollout
+        run: |
+          for deploy in bff identity garudainfo garudacorp garudasign garudaportal garudaaudit; do
+            kubectl rollout status "deployment/${deploy}" -n garudapass --timeout=300s
+          done
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [determine-environment, build-and-push]
+    if: needs.determine-environment.outputs.environment == 'production'
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name garudapass-production --region "${AWS_REGION}"
+
+      - name: Deploy with Kustomize
+        env:
+          VERSION: ${{ needs.determine-environment.outputs.version }}
+        run: |
+          cd infrastructure/kubernetes
+          kustomize build overlays/production | \
+            sed "s|:latest|:${VERSION}|g" | \
+            kubectl apply -f -
+
+      - name: Wait for rollout
+        run: |
+          for deploy in bff identity garudainfo garudacorp garudasign garudaportal garudaaudit; do
+            kubectl rollout status "deployment/${deploy}" -n garudapass --timeout=300s
+          done
+
+      - name: Verify deployment
+        run: |
+          for deploy in bff identity garudainfo garudacorp garudasign garudaportal garudaaudit; do
+            READY=$(kubectl get "deployment/${deploy}" -n garudapass -o jsonpath='{.status.readyReplicas}')
+            echo "${deploy}: ${READY} replicas ready"
+          done
