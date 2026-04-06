@@ -156,17 +156,18 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1727 | 100 packages, race-tested, enterprise patterns |
+| golib | 1785 | 104 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,604** | |
+| **Total** | **2,662** | |
 
-## golib Shared Library (100 packages)
+## golib Shared Library (104 packages)
 
-### Security (10 packages)
+### Security (11 packages)
 | Package | Purpose |
 |---------|---------|
 | `crypto` | HMAC-SHA256, random bytes, multi-version KeyRing |
+| `cryptoutil` | Constant-time comparison, HMAC, key derivation, secure random |
 | `digest` | SHA-256/384/512, CRC32, file hashing, multi-hash verification |
 | `fingerprint` | Request fingerprinting for bot/abuse detection |
 | `jwt` | ECDSA P-256 JWT signing/verification, JWKS endpoint |
@@ -212,17 +213,20 @@ External Request
 | `tags` | Thread-safe observability tag propagation |
 | `tracing` | W3C Trace Context with span tracking |
 
-### API Standards (10 packages)
+### API Standards (13 packages)
 | Package | Purpose |
 |---------|---------|
 | `apiresponse` | RFC 7807 Problem Details responses |
 | `cursor` | Opaque cursor-based pagination with generics |
 | `httputil` | JSON, pagination, filtering, batch API, versioned router |
+| `jsonpatch` | RFC 6902 JSON Patch for partial resource updates |
+| `multipart` | Safe multipart form handling with file upload validation |
 | `negotiate` | HTTP content negotiation (Accept, Encoding, Language) |
 | `paginatedb` | SQL pagination helpers for offset and keyset pagination |
 | `pagination` | Offset-based pagination with generics Apply[T] |
 | `rateheader` | IETF RateLimit-* header utilities |
 | `reqvalidator` | Structured request validation (11 patterns: email, NIK, NPWP, etc.) |
+| `structured` | RFC 7807 structured error reporting with field-level errors |
 | `respwriter` | Response writer wrappers (Capture, Buffer, Pool) |
 | `webhook` | Ed25519 webhook signing (v2) |
 

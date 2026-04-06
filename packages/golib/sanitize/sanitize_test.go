@@ -204,3 +204,145 @@ func TestEmail(t *testing.T) {
 		})
 	}
 }
+
+func TestPathTraversal(t *testing.T) {
+	tests := []struct {
+		path      string
+		dangerous bool
+	}{
+		{"/api/users", false},
+		{"../../../etc/passwd", true},
+		{"/path/%2e%2e/secret", true},
+		{"/path/%252e%252e/secret", true},
+		{"/safe/path/file.txt", false},
+		{"..%2f..%2f..%2fetc%2fpasswd", true},
+		{"/path/..%5c..%5csecret", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			if PathTraversal(tt.path) != tt.dangerous {
+				t.Errorf("PathTraversal(%q) = %v, want %v", tt.path, !tt.dangerous, tt.dangerous)
+			}
+		})
+	}
+}
+
+func TestXSSPayload(t *testing.T) {
+	tests := []struct {
+		input string
+		isXSS bool
+	}{
+		{"Hello World", false},
+		{"<script>document.cookie</script>", true},
+		{"<img src=x onerror=func()>", true},
+		{"javascript:void(0)", true},
+		{"<iframe src='evil'>", true},
+		{"<svg onload=func()>", true},
+		{"Normal user input", false},
+		{"data:text/html,<h1>xss</h1>", true},
+		{"Click <a href='safe'>here</a>", false},
+		{"<SCRIPT>XSS</SCRIPT>", true}, // Case insensitive.
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			if XSSPayload(tt.input) != tt.isXSS {
+				t.Errorf("XSSPayload(%q) = %v, want %v", tt.input, !tt.isXSS, tt.isXSS)
+			}
+		})
+	}
+}
+
+func TestHeaderValue(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"normal value", "normal value"},
+		{"value\r\ninjection: evil", "valueinjection: evil"},
+		{"value\x00null", "valuenull"},
+		{"  trimmed  ", "trimmed"},
+		{"tab\there", "tab\there"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := HeaderValue(tt.input)
+			if got != tt.want {
+				t.Errorf("HeaderValue(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSONString(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"hello", "hello"},
+		{`say "hi"`, `say \"hi\"`},
+		{"back\\slash", "back\\\\slash"},
+		{"new\nline", "new\\nline"},
+		{"<script>", `\u003cscript\u003e`},
+		{"a&b", `a\u0026b`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := JSONString(tt.input)
+			if got != tt.want {
+				t.Errorf("JSONString(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestURL_SSRF(t *testing.T) {
+	tests := []struct {
+		url  string
+		safe bool
+	}{
+		{"https://api.garudapass.id/v1", true},
+		{"http://example.com", true},
+		{"https://localhost:8080", false},         // SSRF.
+		{"http://127.0.0.1:80", false},            // SSRF.
+		{"http://169.254.169.254/metadata", false}, // AWS metadata.
+		{"ftp://example.com", false},               // Wrong scheme.
+		{"javascript:void(0)", false},              // Injection.
+		{"", false},
+		{"http://[::1]:8080", false},               // IPv6 loopback.
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.url, func(t *testing.T) {
+			result := URL(tt.url)
+			if (result != "") != tt.safe {
+				t.Errorf("URL(%q) safe=%v, want %v", tt.url, result != "", tt.safe)
+			}
+		})
+	}
+}
+
+func TestNIK(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"3201120509870001", "3201120509870001"}, // Valid.
+		{"32.01.12.050987.0001", "3201120509870001"}, // With dots, cleaned.
+		{"12345", ""},             // Too short.
+		{"0501010101010001", ""}, // Invalid province (05 < 11).
+		{"9901010101010001", ""}, // Invalid province (99 > 94).
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := NIK(tt.input)
+			if got != tt.want {
+				t.Errorf("NIK(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}

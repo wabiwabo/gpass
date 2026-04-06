@@ -196,3 +196,162 @@ func removeNonPrintable(s string) string {
 	}
 	return b.String()
 }
+
+// PathTraversal checks if a path contains traversal attempts.
+// Returns true if the path is suspicious.
+func PathTraversal(path string) bool {
+	dangerous := []string{
+		"..",
+		"%2e%2e",
+		"%2E%2E",
+		"%252e%252e",
+		"..%2f",
+		"..%5c",
+		"%2e%2e%2f",
+		"%2e%2e%5c",
+	}
+	lower := strings.ToLower(path)
+	for _, d := range dangerous {
+		if strings.Contains(lower, strings.ToLower(d)) {
+			return true
+		}
+	}
+	return false
+}
+
+// XSSPayload checks if a string contains common XSS patterns.
+// This is a defense-in-depth check — proper output encoding is the primary defense.
+func XSSPayload(s string) bool {
+	lower := strings.ToLower(s)
+	patterns := []string{
+		"<script",
+		"javascript:",
+		"onerror=",
+		"onload=",
+		"onclick=",
+		"onmouseover=",
+		"onfocus=",
+		"onblur=",
+		"expression(",
+		"vbscript:",
+		"data:text/html",
+		"<iframe",
+		"<object",
+		"<embed",
+		"<svg",
+		"document.cookie",
+		"document.location",
+		"window.location",
+	}
+	for _, p := range patterns {
+		if strings.Contains(lower, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// HeaderValue sanitizes HTTP header values by removing newlines
+// and control characters that could enable header injection.
+func HeaderValue(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r == '\n' || r == '\r' || r == '\x00' {
+			continue
+		}
+		if unicode.IsControl(r) && r != '\t' {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return strings.TrimSpace(b.String())
+}
+
+// JSONString escapes a string for safe embedding in JSON.
+// Prevents JSON injection by escaping special characters.
+func JSONString(s string) string {
+	var b strings.Builder
+	b.Grow(len(s) + 2)
+	for _, r := range s {
+		switch r {
+		case '"':
+			b.WriteString(`\"`)
+		case '\\':
+			b.WriteString(`\\`)
+		case '\n':
+			b.WriteString(`\n`)
+		case '\r':
+			b.WriteString(`\r`)
+		case '\t':
+			b.WriteString(`\t`)
+		case '<':
+			b.WriteString(`\u003c`)
+		case '>':
+			b.WriteString(`\u003e`)
+		case '&':
+			b.WriteString(`\u0026`)
+		default:
+			if unicode.IsControl(r) {
+				continue
+			}
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// URL validates and sanitizes a URL to prevent SSRF.
+// Returns empty string if the URL is dangerous.
+func URL(s string) string {
+	s = strings.TrimSpace(s)
+
+	// Only allow http and https schemes.
+	if !strings.HasPrefix(s, "http://") && !strings.HasPrefix(s, "https://") {
+		return ""
+	}
+
+	// Block common SSRF targets.
+	lower := strings.ToLower(s)
+	blockedHosts := []string{
+		"localhost",
+		"127.0.0.1",
+		"0.0.0.0",
+		"[::1]",
+		"169.254.",    // AWS metadata.
+		"metadata.google",
+		"100.100.100.200", // Alibaba metadata.
+	}
+	for _, blocked := range blockedHosts {
+		if strings.Contains(lower, blocked) {
+			return ""
+		}
+	}
+
+	return s
+}
+
+// NIK validates and normalizes an Indonesian NIK (National ID Number).
+// Returns the cleaned NIK or empty string if invalid.
+func NIK(s string) string {
+	// Remove all non-digits.
+	var b strings.Builder
+	for _, r := range s {
+		if r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		}
+	}
+	nik := b.String()
+
+	if len(nik) != 16 {
+		return ""
+	}
+
+	// Validate province code (11-94).
+	province := (nik[0]-'0')*10 + (nik[1] - '0')
+	if province < 11 || province > 94 {
+		return ""
+	}
+
+	return nik
+}
