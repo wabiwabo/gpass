@@ -114,15 +114,15 @@ func main() {
 		w.Write([]byte(`{"status":"ready"}`))
 	})
 
-	// API routes (with CSRF protection)
+	// API routes (with session validation + CSRF protection)
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("GET /api/v1/me", sessionHandler.GetSession)
-	mux.Handle("/api/", middleware.CSRF(apiMux))
+	mux.Handle("/api/", middleware.CSRF(middleware.RequireSession(store)(apiMux)))
 
 	// Enterprise middleware chain (outermost first):
 	// Recovery -> RequestID -> AccessLog -> SecurityHeaders -> Handler
 	var rootHandler http.Handler = mux
-	rootHandler = middleware.SecurityHeaders(rootHandler)
+	rootHandler = middleware.SecurityHeadersWithOptions(rootHandler, cfg.IsSecure())
 	rootHandler = middleware.AccessLog(rootHandler)
 	rootHandler = middleware.RequestID(rootHandler)
 	rootHandler = middleware.Recovery(rootHandler)

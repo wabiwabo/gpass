@@ -136,6 +136,51 @@ func TestCallbackHandlesIdPError(t *testing.T) {
 	}
 }
 
+func TestCallbackSuccessCreatesSession(t *testing.T) {
+	h := newTestAuthHandler()
+
+	state := "matching-state-value"
+	req := httptest.NewRequest(http.MethodGet, "/auth/callback?code=valid-code&state="+state, nil)
+	req.AddCookie(&http.Cookie{Name: "gpass_state", Value: state})
+	w := httptest.NewRecorder()
+
+	h.Callback(w, req)
+
+	if w.Code != http.StatusFound {
+		t.Errorf("expected 302 redirect, got %d", w.Code)
+	}
+
+	loc := w.Header().Get("Location")
+	if loc != "http://localhost:3000" {
+		t.Errorf("expected redirect to frontend, got: %s", loc)
+	}
+
+	// Verify session cookie was set
+	cookies := w.Result().Cookies()
+	hasSession := false
+	hasCSRF := false
+	for _, c := range cookies {
+		if c.Name == "gpass_session" && c.Value != "" {
+			hasSession = true
+			if !c.HttpOnly {
+				t.Error("session cookie must be HttpOnly")
+			}
+		}
+		if c.Name == "gpass_csrf" && c.Value != "" {
+			hasCSRF = true
+			if c.HttpOnly {
+				t.Error("CSRF cookie should NOT be HttpOnly (JS needs to read it)")
+			}
+		}
+	}
+	if !hasSession {
+		t.Error("expected gpass_session cookie to be set")
+	}
+	if !hasCSRF {
+		t.Error("expected gpass_csrf cookie to be set")
+	}
+}
+
 func TestLogout(t *testing.T) {
 	h := newTestAuthHandler()
 
