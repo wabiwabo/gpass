@@ -81,3 +81,134 @@ spec:
           protocol: UDP
         - port: 53
           protocol: TCP
+---
+# Allow BFF to reach all internal services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-bff-to-services
+  namespace: garudapass
+spec:
+  podSelector:
+    matchLabels:
+      app: bff
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: identity
+      ports:
+        - port: 4001
+    - to:
+        - podSelector:
+            matchLabels:
+              app: garudainfo
+      ports:
+        - port: 4003
+    - to:
+        - podSelector:
+            matchLabels:
+              app: garudacorp
+      ports:
+        - port: 4006
+    - to:
+        - podSelector:
+            matchLabels:
+              app: garudasign
+      ports:
+        - port: 4007
+    - to:
+        - podSelector:
+            matchLabels:
+              app: garudaportal
+      ports:
+        - port: 4009
+---
+# Allow services to reach PostgreSQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-services-to-postgres
+  namespace: garudapass
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [identity, garudainfo, garudacorp, garudasign, garudaportal]
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - port: 5432
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - port: 53
+          protocol: UDP
+---
+# Allow services to reach Redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-services-to-redis
+  namespace: garudapass
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [identity, garudaportal]
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - port: 6379
+---
+# Allow Prometheus to scrape all services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: garudapass
+spec:
+  podSelector:
+    matchLabels:
+      monitoring: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+---
+# Allow GarudaSign to reach signing backend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-garudasign-to-signing
+  namespace: garudapass
+spec:
+  podSelector:
+    matchLabels:
+      app: garudasign
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: signing-sim
+      ports:
+        - port: 4008
