@@ -2698,18 +2698,18 @@ git commit -m "feat: complete Plan 1 foundation - monorepo, Keycloak FAPI 2.0, G
 
 | Task | Component | Tests | Status |
 |------|-----------|-------|--------|
-| 1 | Monorepo scaffold | — | ☐ |
-| 2 | Docker Compose dev env | — | ☐ |
-| 3 | Keycloak FAPI 2.0 realm | Manual verify | ☐ |
-| 4 | Kong API gateway config | Manual verify | ☐ |
-| 5 | BFF config | 2 unit tests | ☐ |
-| 6 | BFF session store | 1 unit test | ☐ |
-| 7 | BFF auth handlers | 4 unit tests | ☐ |
-| 8 | BFF CSRF middleware | 3 unit tests | ☐ |
-| 9 | BFF main server | Compile check | ☐ |
-| 10 | Citizen portal | Build check | ☐ |
-| 11 | Admin portal | Build check | ☐ |
-| 12 | Kubernetes manifests | Kustomize validate | ☐ |
-| 13 | E2E smoke test | Integration | ☐ |
+| 1 | Monorepo scaffold | — | ☑ |
+| 2 | Docker Compose dev env | — | ☑ |
+| 3 | Keycloak FAPI 2.0 realm | Manual verify | ☑ |
+| 4 | Kong API gateway config | Manual verify | ☑ |
+| 5 | BFF config | 2 unit tests | ☑ |
+| 6 | BFF session store | 1 unit test | ☑ |
+| 7 | BFF auth handlers | 4 unit tests | ☑ |
+| 8 | BFF CSRF middleware | 3 unit tests | ☑ |
+| 9 | BFF main server | Compile check | ☑ |
+| 10 | Citizen portal | Build check | ☑ |
+| 11 | Admin portal | Build check | ☑ |
+| 12 | Kubernetes manifests | Kustomize validate | ☑ |
+| 13 | E2E smoke test | Integration | ☐ (Docker services not started) |
 
 **Next:** Plan 2 (Identity Core) builds on this foundation with Dukcapil integration, GarudaInfo consent API, Keycloak custom SPI for NIK-based auth, and citizen portal features.
