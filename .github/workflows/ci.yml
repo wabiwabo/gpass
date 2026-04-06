@@ -28,6 +28,8 @@ jobs:
           - { dir: "services/ahu-sim", name: "ahu-sim" }
           - { dir: "services/oss-sim", name: "oss-sim" }
           - { dir: "services/garudacorp", name: "garudacorp" }
+          - { dir: "services/signing-sim", name: "signing-sim" }
+          - { dir: "services/garudasign", name: "garudasign" }
 
     defaults:
       run:
@@ -72,6 +74,7 @@ jobs:
           - "services/identity"
           - "services/garudainfo"
           - "services/garudacorp"
+          - "services/garudasign"
 
     defaults:
       run:
@@ -125,7 +128,7 @@ jobs:
         env:
           GIT_SHA: ${{ github.sha }}
         run: |
-          for svc in apps/bff services/identity services/garudainfo services/dukcapil-sim services/ahu-sim services/oss-sim services/garudacorp; do
+          for svc in apps/bff services/identity services/garudainfo services/dukcapil-sim services/ahu-sim services/oss-sim services/garudacorp services/signing-sim services/garudasign; do
             name=$(basename "$svc")
             echo "Building ${name}..."
             docker build -t "garudapass/${name}:${GIT_SHA}" "${svc}"

@@ -285,8 +285,55 @@ services:
     networks:
       - gpass-network
 
+  signing-sim:
+    build: ./services/signing-sim
+    restart: unless-stopped
+    ports:
+      - "4008:4008"
+    environment:
+      SIGNING_SIM_PORT: "4008"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
+  garudasign:
+    build: ./services/garudasign
+    restart: unless-stopped
+    ports:
+      - "4007:4007"
+    env_file: .env
+    volumes:
+      - signing-data:/data/signing
+    depends_on:
+      signing-sim:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
 volumes:
   pgdata:
+  signing-data:
 
 networks:
   gpass-network:
