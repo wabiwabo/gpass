@@ -10,4 +10,5 @@ use (
 	./services/garudacorp
 	./services/signing-sim
 	./services/garudasign
+	./services/garudaportal
 )
