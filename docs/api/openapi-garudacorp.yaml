@@ -1,0 +1,634 @@
+openapi: 3.1.0
+info:
+  title: GarudaPass GarudaCorp Service
+  version: 0.1.0
+  description: |
+    Corporate identity management service for GarudaPass.
+    Handles corporate entity registration via AHU (Administrasi Hukum Umum),
+    role-based access management, entity profile enrichment via OSS (Online Single Submission),
+    and UBO (Ultimate Beneficial Owner) analysis per PP 13/2018.
+
+servers:
+  - url: http://localhost:4006
+    description: Local development
+
+tags:
+  - name: Registration
+    description: Corporate entity registration
+  - name: Entity
+    description: Entity profile retrieval
+  - name: Roles
+    description: Entity role management
+  - name: UBO
+    description: Ultimate Beneficial Ownership analysis
+  - name: Health
+    description: Service health checks
+
+paths:
+  /api/v1/corp/register:
+    post:
+      operationId: registerCorporateEntity
+      summary: Register a corporate entity
+      description: |
+        Registers a corporate entity by verifying the SK number against AHU.
+        The caller must be listed as DIREKTUR_UTAMA in the company's officers.
+        On success, creates the entity record and assigns the caller the REGISTERED_OFFICER role.
+      tags:
+        - Registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Entity registered successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          description: Invalid request or missing required fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Caller is not a Direktur Utama of the company.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Company with the given SK number not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: AHU service is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/corp/entities/{id}:
+    get:
+      operationId: getEntity
+      summary: Get entity profile
+      description: |
+        Returns the full entity profile including officers and shareholders.
+        If the entity has an NPWP, OSS data (NIB and businesses) is enriched automatically.
+      tags:
+        - Entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID.
+      responses:
+        "200":
+          description: Entity profile retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityResponse"
+        "400":
+          description: Missing entity ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Entity not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/corp/entities/{entity_id}/roles:
+    post:
+      operationId: assignRole
+      summary: Assign a role to a user within an entity
+      description: |
+        Assigns a role to a user for the specified entity.
+        Role hierarchy: REGISTERED_OFFICER can assign ADMIN or USER.
+        ADMIN can assign USER only. USER cannot assign any roles.
+      tags:
+        - Roles
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignRoleRequest"
+      responses:
+        "201":
+          description: Role assigned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssignRoleResponse"
+        "400":
+          description: Invalid request or missing required fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Insufficient permissions to assign this role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Entity not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listRoles
+      summary: List roles for an entity
+      description: Returns all roles assigned within the specified entity.
+      tags:
+        - Roles
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID.
+      responses:
+        "200":
+          description: Roles retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListRolesResponse"
+        "400":
+          description: Missing entity ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/corp/entities/{entity_id}/roles/{role_id}:
+    delete:
+      operationId: revokeRole
+      summary: Revoke a role
+      description: Revokes an assigned role by ID. Returns an error if already revoked.
+      tags:
+        - Roles
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID.
+        - name: role_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Role ID to revoke.
+      responses:
+        "200":
+          description: Role revoked successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "revoked"
+        "400":
+          description: Missing entity_id or role_id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Role not found or does not belong to entity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Role is already revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/corp/entities/{entity_id}/ubo/analyze:
+    post:
+      operationId: analyzeUBO
+      summary: Analyze Ultimate Beneficial Ownership
+      description: |
+        Runs UBO analysis on the entity's shareholders and officers
+        per PP 13/2018 criteria (25% threshold). Results are persisted.
+      tags:
+        - UBO
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID.
+      responses:
+        "200":
+          description: UBO analysis completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UBOAnalysisResult"
+        "400":
+          description: Missing entity_id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Entity not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/corp/entities/{entity_id}/ubo:
+    get:
+      operationId: getUBO
+      summary: Get UBO analysis result
+      description: Returns the most recent UBO analysis result for the entity.
+      tags:
+        - UBO
+      parameters:
+        - name: entity_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Entity ID.
+      responses:
+        "200":
+          description: UBO analysis result retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UBOAnalysisResult"
+        "400":
+          description: Missing entity_id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: UBO analysis not found for this entity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - sk_number
+        - caller_user_id
+        - caller_nik
+      properties:
+        sk_number:
+          type: string
+          description: AHU SK (Surat Keputusan) number of the company.
+        caller_user_id:
+          type: string
+          description: GarudaPass user ID of the person registering the entity.
+        caller_nik:
+          type: string
+          description: NIK of the caller for officer verification.
+
+    RegisterResponse:
+      type: object
+      properties:
+        entity_id:
+          type: string
+          description: Created entity ID.
+        role:
+          type: string
+          description: Role assigned to the caller.
+          example: "REGISTERED_OFFICER"
+
+    EntityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        ahu_sk_number:
+          type: string
+        name:
+          type: string
+        entity_type:
+          type: string
+          description: Legal entity type (e.g., PT, CV).
+        status:
+          type: string
+        npwp:
+          type: string
+        address:
+          type: string
+        capital_authorized:
+          type: integer
+          format: int64
+        capital_paid:
+          type: integer
+          format: int64
+        officers:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntityOfficer"
+        shareholders:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntityShareholder"
+        oss_nib:
+          type: string
+          description: NIB from OSS enrichment (if available).
+        oss_businesses:
+          type: array
+          items:
+            $ref: "#/components/schemas/OSSBusiness"
+          description: Business activities from OSS (if available).
+
+    EntityOfficer:
+      type: object
+      properties:
+        id:
+          type: string
+        entity_id:
+          type: string
+        user_id:
+          type: string
+        nik_token:
+          type: string
+          description: HMAC-SHA256 tokenized NIK.
+        name:
+          type: string
+        position:
+          type: string
+          description: Officer position (e.g., DIREKTUR_UTAMA, KOMISARIS).
+        appointment_date:
+          type: string
+        verified:
+          type: boolean
+
+    EntityShareholder:
+      type: object
+      properties:
+        id:
+          type: string
+        entity_id:
+          type: string
+        name:
+          type: string
+        share_type:
+          type: string
+          description: Share type (e.g., SAHAM_BIASA, SAHAM_PREFEREN).
+        shares:
+          type: integer
+          format: int64
+        percentage:
+          type: number
+          format: double
+
+    OSSBusiness:
+      type: object
+      properties:
+        kbli:
+          type: string
+        description:
+          type: string
+        risk_level:
+          type: string
+
+    AssignRoleRequest:
+      type: object
+      required:
+        - user_id
+        - role
+        - caller_user_id
+      properties:
+        user_id:
+          type: string
+          description: User to assign the role to.
+        role:
+          type: string
+          enum:
+            - REGISTERED_OFFICER
+            - ADMIN
+            - USER
+          description: Role to assign.
+        service_access:
+          type: array
+          items:
+            type: string
+          description: Services this role grants access to.
+          example: ["signing", "garudainfo"]
+        caller_user_id:
+          type: string
+          description: User performing the assignment (for authorization check).
+
+    AssignRoleResponse:
+      type: object
+      properties:
+        role_id:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+          example: "ACTIVE"
+
+    ListRolesResponse:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntityRole"
+
+    EntityRole:
+      type: object
+      properties:
+        ID:
+          type: string
+        EntityID:
+          type: string
+        UserID:
+          type: string
+        Role:
+          type: string
+          enum:
+            - REGISTERED_OFFICER
+            - ADMIN
+            - USER
+        GrantedBy:
+          type: string
+        ServiceAccess:
+          type: array
+          items:
+            type: string
+        Status:
+          type: string
+          enum:
+            - ACTIVE
+            - REVOKED
+        GrantedAt:
+          type: string
+          format: date-time
+        RevokedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    UBOAnalysisResult:
+      type: object
+      properties:
+        entity_id:
+          type: string
+        entity_name:
+          type: string
+        beneficial_owners:
+          type: array
+          items:
+            $ref: "#/components/schemas/BeneficialOwner"
+        analyzed_at:
+          type: string
+          format: date-time
+        criteria:
+          type: string
+          description: Regulatory criteria used for analysis.
+          example: "PP_13_2018"
+        status:
+          type: string
+          enum:
+            - IDENTIFIED
+            - INSUFFICIENT_DATA
+            - PENDING_VERIFICATION
+
+    BeneficialOwner:
+      type: object
+      properties:
+        name:
+          type: string
+        nik_token:
+          type: string
+        ownership_type:
+          type: string
+          enum:
+            - DIRECT_SHARES
+            - CONTROLLING_INTEREST
+            - DIRECTOR_CONTROL
+        percentage:
+          type: number
+          format: double
+        source:
+          type: string
+          enum:
+            - AHU
+            - MANUAL
+        verified_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        service:
+          type: string
+          example: "garudacorp"

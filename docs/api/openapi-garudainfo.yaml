@@ -1,0 +1,326 @@
+openapi: 3.1.0
+info:
+  title: GarudaPass GarudaInfo Service
+  version: 0.1.0
+  description: |
+    Consent-based personal data sharing service for GarudaPass.
+    Manages user consent grants and provides person data filtered by active consents.
+
+servers:
+  - url: http://localhost:4003
+    description: Local development
+
+tags:
+  - name: Consent
+    description: Consent management endpoints
+  - name: Person
+    description: Person data retrieval
+  - name: Health
+    description: Service health checks
+
+paths:
+  /api/v1/garudainfo/consents:
+    post:
+      operationId: grantConsent
+      summary: Grant a new consent
+      description: Creates a consent record allowing a client to access specified user data fields for a given duration.
+      tags:
+        - Consent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrantRequest"
+      responses:
+        "201":
+          description: Consent granted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrantResponse"
+        "400":
+          description: Invalid request body or missing required fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listConsents
+      summary: List consents for a user
+      description: Returns all consent records for the specified user.
+      tags:
+        - Consent
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The user ID to list consents for.
+      responses:
+        "200":
+          description: List of consents.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListConsentsResponse"
+        "400":
+          description: Missing user_id query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/garudainfo/consents/{id}:
+    delete:
+      operationId: revokeConsent
+      summary: Revoke a consent
+      description: Revokes an active consent by its ID. Returns an error if already revoked.
+      tags:
+        - Consent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The consent ID to revoke.
+      responses:
+        "200":
+          description: Consent revoked successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevokeResponse"
+        "400":
+          description: Missing consent ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Consent not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Consent has already been revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/garudainfo/person:
+    get:
+      operationId: getPerson
+      summary: Get person data filtered by consent
+      description: |
+        Returns user data fields filtered by the specified consent.
+        Only fields that are granted in the consent and have data available are returned.
+        The consent must be in ACTIVE status.
+      tags:
+        - Person
+      parameters:
+        - name: consent_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The consent ID to use for field filtering.
+      responses:
+        "200":
+          description: Person data filtered by consent.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonResponse"
+        "400":
+          description: Missing consent_id parameter.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Consent is not active.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Consent not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+components:
+  schemas:
+    GrantRequest:
+      type: object
+      required:
+        - user_id
+        - client_id
+        - fields
+        - duration_days
+      properties:
+        user_id:
+          type: string
+          description: The user granting consent.
+        client_id:
+          type: string
+          description: The client application receiving consent.
+        client_name:
+          type: string
+          description: Human-readable name of the client application.
+        purpose:
+          type: string
+          description: Purpose of the data access.
+        fields:
+          type: array
+          items:
+            type: string
+          description: List of data fields being consented (e.g., "full_name", "date_of_birth").
+        duration_days:
+          type: integer
+          minimum: 1
+          description: Duration of consent validity in days.
+
+    GrantResponse:
+      type: object
+      properties:
+        consent_id:
+          type: string
+          description: Unique consent identifier.
+        expires_at:
+          type: string
+          format: date-time
+          description: When this consent expires.
+
+    ListConsentsResponse:
+      type: object
+      properties:
+        consents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Consent"
+
+    Consent:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        client_id:
+          type: string
+        client_name:
+          type: string
+        purpose:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            type: boolean
+          description: Map of field names to granted status.
+        granted_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - REVOKED
+            - EXPIRED
+
+    RevokeResponse:
+      type: object
+      properties:
+        revoked:
+          type: boolean
+          example: true
+
+    PersonResponse:
+      type: object
+      properties:
+        fields:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/FieldValue"
+          description: Map of field names to their verified values.
+
+    FieldValue:
+      type: object
+      properties:
+        value:
+          type: string
+          description: The data value.
+        source:
+          type: string
+          description: Data source (e.g., "DUKCAPIL").
+        last_verified:
+          type: string
+          description: When this field was last verified.
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        service:
+          type: string
+          example: "garudainfo"

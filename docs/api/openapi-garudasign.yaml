@@ -1,0 +1,484 @@
+openapi: 3.1.0
+info:
+  title: GarudaPass GarudaSign Service
+  version: 0.1.0
+  description: |
+    Digital signing service for GarudaPass.
+    Manages X.509 certificate issuance, PDF document upload, PAdES-B-LTA signing,
+    and signed document retrieval/download.
+
+servers:
+  - url: http://localhost:4007
+    description: Local development
+
+tags:
+  - name: Certificates
+    description: Certificate lifecycle management
+  - name: Documents
+    description: Document upload, signing, and download
+  - name: Health
+    description: Service health checks
+
+security:
+  - userIdHeader: []
+
+paths:
+  /api/v1/sign/certificates/request:
+    post:
+      operationId: requestCertificate
+      summary: Request a new certificate
+      description: |
+        Issues a new X.509 certificate for the authenticated user via the signing backend.
+        Returns 409 if the user already has an active certificate.
+      tags:
+        - Certificates
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateRequest"
+      responses:
+        "201":
+          description: Certificate issued successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+        "400":
+          description: Missing X-User-ID header or invalid request body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: User already has an active certificate.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Certificate issuance or storage failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/sign/certificates:
+    get:
+      operationId: listCertificates
+      summary: List certificates for the authenticated user
+      description: Returns all certificates belonging to the user, optionally filtered by status.
+      tags:
+        - Certificates
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - REVOKED
+              - EXPIRED
+          description: Filter certificates by status.
+      responses:
+        "200":
+          description: Certificate list retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  certificates:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Certificate"
+        "400":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to list certificates.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/sign/documents:
+    post:
+      operationId: uploadDocument
+      summary: Upload a PDF document for signing
+      description: |
+        Accepts a multipart file upload of a PDF document.
+        Validates PDF format, computes SHA-256 hash, saves the file, and creates a signing request.
+      tags:
+        - Documents
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - document
+              properties:
+                document:
+                  type: string
+                  format: binary
+                  description: PDF file to upload for signing.
+      responses:
+        "201":
+          description: Document uploaded and signing request created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SigningRequest"
+        "400":
+          description: Invalid file, non-PDF, or missing fields.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Storage or processing failure.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/sign/documents/{id}/sign:
+    post:
+      operationId: signDocument
+      summary: Sign a document
+      description: |
+        Applies a PAdES-B-LTA digital signature to the uploaded document using the user's active certificate.
+        The signing request must be owned by the user, not expired, and not already completed.
+      tags:
+        - Documents
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Signing request ID.
+      responses:
+        "200":
+          description: Document signed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignedDocument"
+        "400":
+          description: Missing user ID, request ID, or no active certificate.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Access denied (request belongs to another user).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Signing request not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Document has already been signed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "410":
+          description: Signing request has expired.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Signing or storage failure.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/sign/documents/{id}:
+    get:
+      operationId: getDocumentStatus
+      summary: Get signing request status
+      description: |
+        Returns the signing request details and, if completed, the signed document metadata.
+      tags:
+        - Documents
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Signing request ID.
+      responses:
+        "200":
+          description: Signing request status retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request:
+                    $ref: "#/components/schemas/SigningRequest"
+                  signed_document:
+                    $ref: "#/components/schemas/SignedDocument"
+                    description: Present only when status is COMPLETED.
+        "400":
+          description: Missing user ID or request ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Signing request not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/sign/documents/{id}/download:
+    get:
+      operationId: downloadSignedDocument
+      summary: Download signed document
+      description: |
+        Downloads the signed PDF file. Only available after signing is COMPLETED.
+      tags:
+        - Documents
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Signing request ID.
+      responses:
+        "200":
+          description: Signed PDF file.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="signed_document.pdf"'
+        "400":
+          description: Missing user ID, request ID, or signing not completed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Access denied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Signing request or signed document not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to load signed document.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+components:
+  parameters:
+    XUserID:
+      name: X-User-ID
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Authenticated user ID.
+
+  securitySchemes:
+    userIdHeader:
+      type: apiKey
+      in: header
+      name: X-User-ID
+      description: User identity passed by the BFF or API gateway.
+
+  schemas:
+    CertificateRequest:
+      type: object
+      properties:
+        subject_cn:
+          type: string
+          description: Subject Common Name for the certificate. Defaults to user ID if empty.
+
+    Certificate:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        serial_number:
+          type: string
+        issuer_dn:
+          type: string
+        subject_dn:
+          type: string
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - REVOKED
+            - EXPIRED
+        valid_from:
+          type: string
+          format: date-time
+        valid_to:
+          type: string
+          format: date-time
+        certificate_pem:
+          type: string
+          description: PEM-encoded certificate.
+        fingerprint_sha256:
+          type: string
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        revocation_reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SigningRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        certificate_id:
+          type: string
+        document_name:
+          type: string
+        document_size:
+          type: integer
+          format: int64
+        document_hash:
+          type: string
+          description: SHA-256 hash of the original document.
+        document_path:
+          type: string
+        status:
+          type: string
+          enum:
+            - PENDING
+            - COMPLETED
+            - FAILED
+        error_message:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SignedDocument:
+      type: object
+      properties:
+        id:
+          type: string
+        request_id:
+          type: string
+        certificate_id:
+          type: string
+        signed_hash:
+          type: string
+          description: SHA-256 hash of the signed document.
+        signed_path:
+          type: string
+        signed_size:
+          type: integer
+          format: int64
+        pades_level:
+          type: string
+          description: PAdES conformance level (e.g., PAdES-B-LTA).
+        signature_timestamp:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        service:
+          type: string
+          example: "garudasign"
