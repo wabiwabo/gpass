@@ -156,12 +156,12 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1836 | 114 packages, race-tested, enterprise patterns |
+| golib | 1880 | 120 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,772** | |
+| **Total** | **2,816** | |
 
-## golib Shared Library (114 packages)
+## golib Shared Library (120 packages)
 
 ### Security (13 packages)
 | Package | Purpose |
@@ -201,7 +201,7 @@ External Request
 | `throttle` | Per-key token bucket rate limiter with HTTP middleware |
 | `webhookretry` | Exponential backoff retry for webhook delivery |
 
-### Observability (13 packages)
+### Observability (14 packages)
 | Package | Purpose |
 |---------|---------|
 | `accesslog` | Request latency percentile tracking (p50/p95/p99) |
@@ -217,14 +217,16 @@ External Request
 | `statuspage` | Service status page with components, incidents, maintenance |
 | `tags` | Thread-safe observability tag propagation |
 | `tracing` | W3C Trace Context with span tracking |
+| `headerprop` | Standardized header propagation across service boundaries |
 
-### API Standards (16 packages)
+### API Standards (19 packages)
 | Package | Purpose |
 |---------|---------|
 | `apiresponse` | RFC 7807 Problem Details responses |
 | `apiver` | API versioning via header/path/query with deprecation |
 | `compress` | HTTP response compression (gzip/deflate) with min size |
 | `cursor` | Opaque cursor-based pagination with generics |
+| `etag` | HTTP conditional requests with ETag/If-None-Match (RFC 7232) |
 | `httputil` | JSON, pagination, filtering, batch API, versioned router |
 | `jsonpatch` | RFC 6902 JSON Patch for partial resource updates |
 | `maxbody` | Request body size enforcement with per-route limits |
@@ -235,6 +237,7 @@ External Request
 | `rateheader` | IETF RateLimit-* header utilities |
 | `reqvalidator` | Structured request validation (11 patterns: email, NIK, NPWP, etc.) |
 | `structured` | RFC 7807 structured error reporting with field-level errors |
+| `timeout` | Per-route HTTP timeout middleware with 504 responses |
 | `respwriter` | Response writer wrappers (Capture, Buffer, Pool) |
 | `webhook` | Ed25519 webhook signing (v2) |
 
@@ -252,7 +255,7 @@ External Request
 | `retention` | PP 71/2019 and UU PDP retention policy enforcer |
 | `seeddata` | JSON seed data loader with dependency ordering |
 
-### Infrastructure (22 packages)
+### Infrastructure (24 packages)
 | Package | Purpose |
 |---------|---------|
 | `audit` | Audit context enrichment, IP extraction |
@@ -271,13 +274,16 @@ External Request
 | `interval` | Periodic task execution with jitter and error stats |
 | `httpclient` | HTTP client with circuit breaker, request signing |
 | `iterset` | Generic set operations (union, intersection, difference) |
+| `recovery` | Panic recovery with RFC 7807 error responses |
 | `redis` | Redis client with health checking |
 | `requestid` | Request ID generation and middleware |
 | `safemap` | Type-safe concurrent map with TTL and generics |
 | `server` | Graceful shutdown server with connection draining |
 | `shutdown` | Shutdown coordinator with priority-ordered hooks |
 | `signctx` | Signal-aware context for graceful shutdown propagation |
+| `sniff` | Content type sniffing prevention + security headers |
 | `token` | Cryptographic token generation (hex, base62, UUID, OTP) |
+| `typedctx` | Type-safe context values using generics |
 
 ### Domain (11 packages)
 | Package | Purpose |
