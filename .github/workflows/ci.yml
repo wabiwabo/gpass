@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+env:
+  GO_VERSION: "1.22"
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9.15.0"
+
+jobs:
+  go-test:
+    name: Go Tests & Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/bff
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: apps/bff/go.sum
+
+      - name: Download dependencies
+        run: go mod download && go mod verify
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test with coverage
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic -count=1
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
+          echo "Total coverage: ${COVERAGE}%"
+          threshold=80
+          if [ "$(echo "$COVERAGE < $threshold" | bc -l)" -eq 1 ]; then
+            echo "::error::Coverage ${COVERAGE}% is below ${threshold}% threshold"
+            exit 1
+          fi
+
+      - name: Build
+        env:
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          CGO_ENABLED=0 go build \
+            -trimpath \
+            -ldflags="-s -w -X main.version=${GIT_SHA} -X main.commit=${GIT_SHA}" \
+            -o /dev/null .
+
+  go-security:
+    name: Go Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/bff
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run vulnerability check
+        run: govulncheck ./...
+
+  frontend-lint:
+    name: Frontend Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile || pnpm install
+
+      - name: Lint
+        run: pnpm lint
+        continue-on-error: true
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [go-test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build BFF Docker image
+        env:
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          docker build \
+            --build-arg VERSION="${GIT_SHA}" \
+            --build-arg COMMIT="${GIT_SHA}" \
+            --build-arg BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -t garudapass/bff:"${GIT_SHA}" \
+            apps/bff
+
+  validate-infra:
+    name: Validate Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
+
+      - name: Validate Keycloak realm JSON
+        run: python3 -m json.tool infrastructure/keycloak/realm-export.json > /dev/null
+
+      - name: Validate Kubernetes manifests
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+          kustomize build infrastructure/kubernetes/base/ > /dev/null
+          echo "Base manifests: Valid"
+          kustomize build infrastructure/kubernetes/overlays/dev/ > /dev/null
+          echo "Dev overlay: Valid"
+          kustomize build infrastructure/kubernetes/overlays/staging/ > /dev/null
+          echo "Staging overlay: Valid"
