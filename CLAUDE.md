@@ -24,7 +24,7 @@ services/
   garudanotify/     — Email/SMS notifications (port 4011)
 
 packages/
-  golib/            — Shared Go library (225 packages, stdlib only)
+  golib/            — Shared Go library (230 packages, stdlib only)
   ui/               — Shared React/shadcn components
   config/           — Shared TypeScript/Tailwind config
 
