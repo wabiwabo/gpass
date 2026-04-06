@@ -1,0 +1,21 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: bff-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: bff
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: keycloak-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: keycloak
