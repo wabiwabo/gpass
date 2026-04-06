@@ -36,6 +36,7 @@ func main() {
 	// Stores
 	entityStore := store.NewInMemoryEntityStore()
 	roleStore := store.NewInMemoryRoleStore()
+	uboStore := store.NewInMemoryUBOStore()
 
 	// Clients
 	ahuClient := ahu.NewClient(cfg.AHUURL, cfg.AHUAPIKey, cfg.AHUTimeout)
@@ -50,6 +51,7 @@ func main() {
 	})
 	roleHandler := handler.NewRoleHandler(roleStore, entityStore)
 	entityHandler := handler.NewEntityHandler(entityStore, ossClient)
+	uboHandler := handler.NewUBOHandler(entityStore, uboStore)
 
 	mux := http.NewServeMux()
 
@@ -66,6 +68,8 @@ func main() {
 	mux.HandleFunc("POST /api/v1/corp/entities/{entity_id}/roles", roleHandler.AssignRole)
 	mux.HandleFunc("GET /api/v1/corp/entities/{entity_id}/roles", roleHandler.ListRoles)
 	mux.HandleFunc("DELETE /api/v1/corp/entities/{entity_id}/roles/{role_id}", roleHandler.RevokeRole)
+	mux.HandleFunc("POST /api/v1/corp/entities/{entity_id}/ubo/analyze", uboHandler.AnalyzeUBO)
+	mux.HandleFunc("GET /api/v1/corp/entities/{entity_id}/ubo", uboHandler.GetUBO)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
