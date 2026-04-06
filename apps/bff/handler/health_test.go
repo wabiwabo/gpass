@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 )
 
@@ -143,9 +144,9 @@ func TestHealthAggregator_ServeHTTP_Unhealthy(t *testing.T) {
 }
 
 func TestHealthAggregator_ConcurrentChecks(t *testing.T) {
-	callCount := 0
+	var callCount atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
+		callCount.Add(1)
 		fmt.Fprint(w, `{"status":"ok"}`)
 	}))
 	defer server.Close()
