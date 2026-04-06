@@ -1,10 +1,64 @@
+# Dependencies
 node_modules/
+vendor/
+
+# Build outputs
 .next/
 dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Turborepo
 .turbo/
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Logs
 *.log
-.superpowers/
-keys/
+
+# Test & coverage
 coverage.out
 *.prof
+*.test
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keys & secrets
+keys/
+*.pem
+*.key
+*.p12
+*.jks
+
+# Superpowers
+.superpowers/
+
+# Terraform
+infrastructure/terraform/.terraform/
+infrastructure/terraform/*.tfstate
+infrastructure/terraform/*.tfstate.backup
+infrastructure/terraform/.terraform.lock.hcl
+
+# Signing data
+/data/signing/
+
+# Docker
+docker-compose.override.yml
+
+# Temporary
+tmp/
+*.tmp
