@@ -156,12 +156,12 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1880 | 120 packages, race-tested, enterprise patterns |
+| golib | 1927 | 125 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,816** | |
+| **Total** | **2,863** | |
 
-## golib Shared Library (120 packages)
+## golib Shared Library (125 packages)
 
 ### Security (13 packages)
 | Package | Purpose |
@@ -201,10 +201,11 @@ External Request
 | `throttle` | Per-key token bucket rate limiter with HTTP middleware |
 | `webhookretry` | Exponential backoff retry for webhook delivery |
 
-### Observability (14 packages)
+### Observability (16 packages)
 | Package | Purpose |
 |---------|---------|
 | `accesslog` | Request latency percentile tracking (p50/p95/p99) |
+| `audithttp` | Automatic HTTP audit event emission (PP 71/2019) |
 | `correlation` | Structured correlation/causation ID propagation across services |
 | `depcheck` | Concurrent dependency health checking |
 | `healthagg` | Health aggregation across services with caching and HTTP handler |
@@ -217,6 +218,7 @@ External Request
 | `statuspage` | Service status page with components, incidents, maintenance |
 | `tags` | Thread-safe observability tag propagation |
 | `tracing` | W3C Trace Context with span tracking |
+| `tracehttp` | Automatic trace header injection for downstream calls |
 | `headerprop` | Standardized header propagation across service boundaries |
 
 ### API Standards (19 packages)
@@ -255,7 +257,7 @@ External Request
 | `retention` | PP 71/2019 and UU PDP retention policy enforcer |
 | `seeddata` | JSON seed data loader with dependency ordering |
 
-### Infrastructure (24 packages)
+### Infrastructure (26 packages)
 | Package | Purpose |
 |---------|---------|
 | `audit` | Audit context enrichment, IP extraction |
@@ -274,8 +276,10 @@ External Request
 | `interval` | Periodic task execution with jitter and error stats |
 | `httpclient` | HTTP client with circuit breaker, request signing |
 | `iterset` | Generic set operations (union, intersection, difference) |
+| `mwchain` | Composable middleware chain with named stages |
 | `recovery` | Panic recovery with RFC 7807 error responses |
 | `redis` | Redis client with health checking |
+| `reqscope` | Request-scoped dependency injection |
 | `requestid` | Request ID generation and middleware |
 | `safemap` | Type-safe concurrent map with TTL and generics |
 | `server` | Graceful shutdown server with connection draining |
@@ -285,7 +289,7 @@ External Request
 | `token` | Cryptographic token generation (hex, base62, UUID, OTP) |
 | `typedctx` | Type-safe context values using generics |
 
-### Domain (11 packages)
+### Domain (12 packages)
 | Package | Purpose |
 |---------|---------|
 | `chaos` | Fault injection with configurable error rates |
@@ -303,6 +307,7 @@ External Request
 | `sdkgen` | Go SDK code generator from API definitions |
 | `security` | Security event logger for SOC/SIEM (16 event types) |
 | `tenant` | Multi-tenant isolation middleware |
+| `tenantctx` | Multi-tenant context isolation with validation |
 | `timeutil` | Indonesian timezone support (WIB/WITA/WIT) |
 | `validate` | Input validation (NIK, email, UUID, password strength) |
 | `worker` | Generic worker pool for background tasks |
