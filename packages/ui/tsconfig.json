@@ -1,13 +1,8 @@
 {
+  "extends": "@garudapass/config/tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "declaration": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "jsx": "react-jsx"
+    "outDir": "dist"
   },
-  "include": ["src"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -1,0 +1,13 @@
+{
+  "extends": "@garudapass/config/tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./*"],
+      "@garudapass/ui": ["../../packages/ui"],
+      "@garudapass/ui/*": ["../../packages/ui/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
