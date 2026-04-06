@@ -77,14 +77,14 @@ All notable changes to GarudaPass are documented in this file.
 - 5-year retention policy enforcement
 - Notification service (email + SMS channels)
 
-### Shared Library (golib — 125 packages)
-- **Security (10):** KMS envelope encryption, JWT ES256, permissions, fingerprinting, PII masking, digest hashing, mTLS, sanitization
-- **Resilience (14):** Circuit breaker, bulkhead, singleflight, adaptive throttle, distributed lock, sliding window rate limiter, retry/fallback, request budget, backpressure/load shedding, generic connection pooling, cascading fallback, circuit-breaker HTTP transport, weighted semaphore, per-key throttle
-- **Observability (13):** W3C tracing, access log percentiles, dependency checks, health graphs, K8s probes, log sampling, metrics, tags, correlation ID propagation, health aggregation, request logging, rate windows, status page
-- **API Standards (10):** RFC 7807 responses, cursor pagination, content negotiation, rate limit headers, request validation (11 patterns), response writers, SQL pagination helpers
-- **Data Management (10):** Transactional outbox, event sourcing, CQRS, idempotency, retention enforcement, audit trail, data lineage, seed data, exactly-once dedup, event envelope with routing/retry
-- **Infrastructure (21):** Graceful shutdown, config loader, environment helpers, request IDs, tokens, batch processing, caching, events, health checks, bloom filter, context utils, generic sets, safe concurrent maps, signal-aware context
-- **Domain (20):** Middleware (25+ types), OAuth2/OIDC, ABAC policy, feature flags, chaos engineering, contract testing, multi-tenancy, Indonesian timezone support
+### Shared Library (golib — 130 packages)
+- **Security (13):** KMS envelope encryption, JWT ES256, permissions, fingerprinting, PII masking, digest hashing, mTLS, sanitization, crypto utils, IP allowlists, request signing
+- **Resilience (17):** Circuit breaker, bulkhead, singleflight, adaptive throttle, distributed lock, rate limiter, retry/fallback, budget, backpressure, connection pool, cascade fallback, circuit-breaker HTTP, semaphore, throttle, drain, webhook retry, retryable
+- **Observability (16):** W3C tracing, access log, dependency checks, health graphs, K8s probes, log sampling, metrics, tags, correlation, health aggregation, request logging, rate windows, status page, audit HTTP, trace HTTP, header propagation
+- **API Standards (19):** RFC 7807, cursor pagination, content negotiation, rate limit headers, validation (11 patterns), response writers, SQL pagination, ETag/conditional requests, API versioning, compression, body limits, JSON Patch, multipart, structured errors, timeout
+- **Data Management (10):** Transactional outbox, event sourcing, CQRS, idempotency, retention enforcement, audit trail, data lineage, seed data, exactly-once dedup, event envelope
+- **Infrastructure (28):** Graceful shutdown, config loader, env helpers, request IDs, tokens, batch processing, caching, events, health checks, bloom filter, context utils, generic sets, safe maps, signal context, middleware chain, request scope, typed context, recovery, security headers, service info, limiter registry, task pool, consistent hashing
+- **Domain (12):** Middleware (25+ types), OAuth2/OIDC, ABAC policy, feature flags, chaos engineering, contract testing, multi-tenancy, Indonesian timezone, normalize, tenant context
 - **SLA & Compliance (1):** SLA monitoring with error budget tracking and burn rate analysis
 
 ### Infrastructure
@@ -98,9 +98,9 @@ All notable changes to GarudaPass are documented in this file.
 - 6 OpenAPI 3.1 specifications
 
 ### Metrics
-- 2,863 Go tests across all modules (race-detector verified)
-- 215+ conventional commits
-- 130,000+ lines of Go code
-- 625+ Go files, 312+ test files
+- 2,903 Go tests across all modules (race-detector verified)
+- 220+ conventional commits
+- 135,000+ lines of Go code
+- 640+ Go files, 320+ test files
 - 12 Go services + 2 Next.js apps + 4 simulators
-- 125 shared library packages (zero external dependencies)
+- 130 shared library packages (zero external dependencies)
