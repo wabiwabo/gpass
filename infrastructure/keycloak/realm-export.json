@@ -1,0 +1,168 @@
+{
+  "realm": "garudapass",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "sslRequired": "none",
+  "defaultSignatureAlgorithm": "ES256",
+  "accessTokenLifespan": 600,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "accessCodeLifespan": 60,
+  "oauth2DeviceCodeLifespan": 600,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 5,
+  "passwordPolicy": "length(12) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername and passwordHistory(3)",
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA256",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "eventsEnabled": true,
+  "eventsExpiration": 604800,
+  "eventsListeners": ["jboss-logging"],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "attributes": {
+    "parSupported": "true",
+    "requirePushedAuthorizationRequests": "true",
+    "dpopEnforced": "true"
+  },
+  "roles": {
+    "realm": [
+      { "name": "gpass_user", "description": "Standard GarudaPass user" },
+      { "name": "gpass_admin", "description": "GarudaPass platform admin" },
+      { "name": "gpass_developer", "description": "Developer with API access" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "bff-client",
+      "name": "GarudaPass Web BFF",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-jwt",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4000/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "token.endpoint.auth.signing.alg": "ES256",
+        "use.refresh.tokens": "true",
+        "client_credentials.use_refresh_token": "false",
+        "require.pushed.authorization.requests": "true",
+        "id.token.signed.response.alg": "ES256",
+        "access.token.signed.response.alg": "ES256"
+      },
+      "defaultClientScopes": [
+        "openid",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "garudainfo",
+        "authinfo"
+      ]
+    },
+    {
+      "clientId": "sandbox-test-client",
+      "name": "Sandbox Test Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "sandbox-test-secret-change-in-production",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:*"],
+      "webOrigins": ["*"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["openid", "profile", "email"]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "garudainfo",
+      "description": "Access to GarudaInfo verified personal data",
+      "protocol": "openid-connect",
+      "attributes": {
+        "consent.screen.text": "Access your verified personal data (name, NIK, address)"
+      },
+      "protocolMappers": [
+        {
+          "name": "nik-masked",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "nik_masked",
+            "claim.name": "nik_masked",
+            "jsonType.label": "String",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "authinfo",
+      "description": "Corporate authorization info (role, entity, access rights)",
+      "protocol": "openid-connect",
+      "attributes": {
+        "consent.screen.text": "Access your corporate role and authorization information"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser",
+      "email": "test@garudapass.id",
+      "enabled": true,
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testpassword123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["gpass_user"],
+      "attributes": {
+        "nik_masked": "************1234",
+        "verified": "true",
+        "auth_level": "2"
+      }
+    },
+    {
+      "username": "admin",
+      "email": "admin@garudapass.id",
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "GarudaPass",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "adminpassword123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["gpass_admin", "gpass_user"]
+    }
+  ]
+}

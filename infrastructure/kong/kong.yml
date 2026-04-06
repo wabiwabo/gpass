@@ -1,0 +1,58 @@
+_format_version: "3.0"
+
+services:
+  - name: bff-service
+    url: http://host.docker.internal:4000
+    routes:
+      - name: bff-auth-routes
+        paths:
+          - /auth
+        strip_path: false
+      - name: bff-api-routes
+        paths:
+          - /api
+        strip_path: false
+
+  - name: keycloak-service
+    url: http://keycloak:8080
+    routes:
+      - name: keycloak-well-known
+        paths:
+          - /realms
+        strip_path: false
+
+plugins:
+  - name: rate-limiting
+    config:
+      minute: 60
+      policy: local
+    route: bff-auth-routes
+
+  - name: rate-limiting
+    config:
+      minute: 300
+      policy: local
+    route: bff-api-routes
+
+  - name: cors
+    config:
+      origins:
+        - http://localhost:3000
+        - http://localhost:3001
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Content-Type
+        - Authorization
+        - X-CSRF-Token
+      credentials: true
+      max_age: 3600
+
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 10
+      size_unit: megabytes
