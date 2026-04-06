@@ -14,6 +14,7 @@ import (
 	"github.com/garudapass/gpass/services/identity/dukcapil"
 	"github.com/garudapass/gpass/services/identity/handler"
 	"github.com/garudapass/gpass/services/identity/otp"
+	"github.com/garudapass/gpass/services/identity/store"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -62,10 +63,17 @@ func main() {
 		NIKKey:   cfg.ServerNIKKey,
 	})
 
+	// Deletion handler (UU PDP compliance)
+	deletionStore := store.NewInMemoryDeletionStore()
+	auditEmitter := &logAuditEmitter{}
+	deletionHandler := handler.NewDeletionHandler(deletionStore, auditEmitter)
+
 	mux := http.NewServeMux()
 
 	// API routes
 	mux.HandleFunc("POST /api/v1/register/initiate", registerHandler.Initiate)
+	mux.HandleFunc("POST /api/v1/identity/deletion", deletionHandler.RequestDeletion)
+	mux.HandleFunc("GET /api/v1/identity/deletion/{id}", deletionHandler.GetDeletionStatus)
 
 	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -107,4 +115,18 @@ func main() {
 	}
 
 	slog.Info("Identity service shut down gracefully")
+}
+
+// logAuditEmitter implements handler.AuditEmitter by writing structured log entries.
+// In production, this would publish to Kafka for the audit service.
+type logAuditEmitter struct{}
+
+func (e *logAuditEmitter) Emit(eventType, userID, resourceID string, metadata map[string]string) error {
+	slog.Info("audit event",
+		"event_type", eventType,
+		"user_id", userID,
+		"resource_id", resourceID,
+		"metadata", metadata,
+	)
+	return nil
 }
