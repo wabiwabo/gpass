@@ -23,7 +23,7 @@ dev: ## Start development servers
 build: ## Build BFF binary with version info
 	cd apps/bff && CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o ../../dist/bff .
 
-GO_SERVICES := apps/bff services/identity services/garudainfo services/dukcapil-sim services/ahu-sim services/oss-sim services/garudacorp services/signing-sim services/garudasign services/garudaportal packages/golib
+GO_SERVICES := apps/bff services/identity services/garudainfo services/dukcapil-sim services/ahu-sim services/oss-sim services/garudacorp services/signing-sim services/garudasign services/garudaportal services/garudaaudit services/garudanotify packages/golib
 
 test: ## Run all Go tests
 	@total=0; \

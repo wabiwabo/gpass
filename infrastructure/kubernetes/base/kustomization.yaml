@@ -11,6 +11,7 @@ resources:
   - bff.yaml
   - services.yaml
   - monitoring.yaml
+  - ingress.yaml
   - hpa.yaml
   - network-policy.yaml
   - pdb.yaml

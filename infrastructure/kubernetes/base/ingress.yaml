@@ -1,0 +1,79 @@
+---
+# Production Ingress with TLS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: garudapass-ingress
+  namespace: garudapass
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/rate-limit: "60"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Permissions-Policy: camera=(), microphone=(), geolocation=()";
+spec:
+  tls:
+    - hosts:
+        - api.garudapass.id
+        - garudapass.id
+        - admin.garudapass.id
+      secretName: garudapass-tls
+  rules:
+    # API traffic → Kong
+    - host: api.garudapass.id
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kong-proxy
+                port:
+                  number: 8000
+
+    # Citizen portal → web app
+    - host: garudapass.id
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 3000
+
+    # Admin dashboard → admin app
+    - host: admin.garudapass.id
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin
+                port:
+                  number: 3001
+---
+# cert-manager ClusterIssuer for Let's Encrypt
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@garudapass.id
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
