@@ -6,3 +6,5 @@ dist/
 *.log
 .superpowers/
 keys/
+coverage.out
+*.prof

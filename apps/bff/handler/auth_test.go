@@ -1,10 +1,12 @@
 package handler_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/garudapass/gpass/apps/bff/handler"
 	"github.com/garudapass/gpass/apps/bff/session"
@@ -181,7 +183,7 @@ func TestCallbackSuccessCreatesSession(t *testing.T) {
 	}
 }
 
-func TestLogout(t *testing.T) {
+func TestLogoutWithoutSession(t *testing.T) {
 	h := newTestAuthHandler()
 
 	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
@@ -209,5 +211,39 @@ func TestLogout(t *testing.T) {
 	}
 	if !csrfCleared {
 		t.Error("expected gpass_csrf cookie to be cleared")
+	}
+}
+
+func TestLogoutWithActiveSession(t *testing.T) {
+	store := session.NewInMemoryStore()
+	h := handler.NewAuthHandler(handler.AuthConfig{
+		IssuerURL:    "http://keycloak:8080/realms/garudapass",
+		ClientID:     "bff-client",
+		RedirectURI:  "http://localhost:4000/auth/callback",
+		FrontendURL:  "http://localhost:3000",
+		SecureCookie: false,
+	}, store)
+
+	// Create a session first
+	sid, _ := store.Create(context.Background(), &session.Data{
+		UserID:    "user-to-logout",
+		CSRFToken: "csrf-123",
+		ExpiresAt: time.Now().Add(30 * time.Minute),
+	}, 30*time.Minute)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.AddCookie(&http.Cookie{Name: "gpass_session", Value: sid})
+	w := httptest.NewRecorder()
+
+	h.Logout(w, req)
+
+	if w.Code != http.StatusFound {
+		t.Errorf("expected 302, got %d", w.Code)
+	}
+
+	// Verify the session was deleted from the store
+	_, err := store.Get(context.Background(), sid)
+	if err != session.ErrSessionNotFound {
+		t.Errorf("expected session to be deleted, got err: %v", err)
 	}
 }
