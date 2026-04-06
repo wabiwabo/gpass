@@ -15,7 +15,7 @@ func TestNIKFormat_LeadingZerosPreserved(t *testing.T) {
 }
 
 func TestNIKFormat_AllValidProvinceCodes(t *testing.T) {
-	for code := 11; code <= 99; code++ {
+	for code := 11; code <= 94; code++ {
 		nik := fmt.Sprintf("%02d01010101010001", code)
 		t.Run(fmt.Sprintf("province_%02d", code), func(t *testing.T) {
 			if err := NIKFormat(nik); err != nil {
@@ -211,8 +211,8 @@ func TestNIKFormat_EdgeCases(t *testing.T) {
 		nik     string
 		wantErr bool
 	}{
-		{"all zeros except province", "1100000000000000", false},
-		{"all nines", "9999999999999999", false},
+		{"min valid NIK", "1101010101010001", false},
+		{"all nines", "9999999999999999", true}, // Province 99 > 94.
 		{"with spaces", "3201 0101 0101 0001", true},
 		{"empty", "", true},
 	}

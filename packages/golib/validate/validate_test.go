@@ -100,7 +100,8 @@ func TestNIKFormat(t *testing.T) {
 		wantErr bool
 	}{
 		{"valid", "3201010101010001", false},
-		{"valid province 99", "9901010101010001", false},
+		{"valid province 94", "9401010101010001", false},
+		{"invalid province 99", "9901010101010001", true},
 		{"too short", "123456", true},
 		{"too long", "12345678901234567", true},
 		{"letters", "abcdefghijklmnop", true},
@@ -149,5 +150,183 @@ func TestErrors_EmptyError(t *testing.T) {
 	var errs Errors
 	if msg := errs.Error(); msg != "" {
 		t.Errorf("expected empty error message, got %q", msg)
+	}
+}
+
+func TestNIKFormat_DateEncoding(t *testing.T) {
+	tests := []struct {
+		nik   string
+		valid bool
+		desc  string
+	}{
+		{"3201120509870001", true, "valid male NIK"},
+		{"3201124509870001", true, "valid female NIK (day+40=45)"},
+		{"3201120013870001", false, "invalid month 13"},
+		{"3201120000870001", false, "invalid day 0"},
+		{"3201120032870001", false, "day 32 invalid for male"},
+		{"3201120072870001", false, "day 72 invalid for female"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			err := NIKFormat(tt.nik)
+			if (err == nil) != tt.valid {
+				t.Errorf("NIKFormat(%q): err=%v, want valid=%v", tt.nik, err, tt.valid)
+			}
+		})
+	}
+}
+
+func TestNIKFormat_DistrictValidation(t *testing.T) {
+	err := NIKFormat("3200120509870001") // District 00 invalid.
+	if err == nil {
+		t.Error("district 00 should be invalid")
+	}
+}
+
+func TestNPWPFormat(t *testing.T) {
+	tests := []struct {
+		npwp  string
+		valid bool
+	}{
+		{"012345678901234", true},
+		{"01.234.567.8-901.234", true},
+		{"12345", false},
+		{"01234567890123A", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.npwp, func(t *testing.T) {
+			err := NPWPFormat(tt.npwp)
+			if (err == nil) != tt.valid {
+				t.Errorf("NPWPFormat(%q): err=%v, want valid=%v", tt.npwp, err, tt.valid)
+			}
+		})
+	}
+}
+
+func TestPhoneIDFormat(t *testing.T) {
+	tests := []struct {
+		phone string
+		valid bool
+	}{
+		{"+6281234567890", true},
+		{"+622123456789", true},
+		{"081234567890", false},
+		{"+621234567", false},      // Too short.
+		{"+62812345678901234", false}, // Too long.
+		{"+6281abc", false},         // Non-digit.
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.phone, func(t *testing.T) {
+			err := PhoneIDFormat(tt.phone)
+			if (err == nil) != tt.valid {
+				t.Errorf("PhoneIDFormat(%q): err=%v, want valid=%v", tt.phone, err, tt.valid)
+			}
+		})
+	}
+}
+
+func TestNIBFormat(t *testing.T) {
+	tests := []struct {
+		nib   string
+		valid bool
+	}{
+		{"1234567890123", true},
+		{"12345", false},
+		{"123456789012A", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nib, func(t *testing.T) {
+			err := NIBFormat(tt.nib)
+			if (err == nil) != tt.valid {
+				t.Errorf("NIBFormat(%q): err=%v, want valid=%v", tt.nib, err, tt.valid)
+			}
+		})
+	}
+}
+
+func TestAKTAFormat(t *testing.T) {
+	tests := []struct {
+		akta  string
+		valid bool
+	}{
+		{"12345", true},
+		{"123/2024", true},
+		{"1-2024", true},
+		{"", false},
+		{"ABC", false}, // Letters not allowed.
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.akta, func(t *testing.T) {
+			err := AKTAFormat(tt.akta)
+			if (err == nil) != tt.valid {
+				t.Errorf("AKTAFormat(%q): err=%v, want valid=%v", tt.akta, err, tt.valid)
+			}
+		})
+	}
+}
+
+func TestSKFormat(t *testing.T) {
+	if err := SKFormat("AHU-12345.AH.01.01"); err != nil {
+		t.Errorf("valid SK: %v", err)
+	}
+	if err := SKFormat("INVALID-123"); err == nil {
+		t.Error("invalid SK should fail")
+	}
+	if err := SKFormat(""); err == nil {
+		t.Error("empty SK should fail")
+	}
+}
+
+func TestIsAlpha(t *testing.T) {
+	if err := IsAlpha("name", "Hello"); err != nil {
+		t.Error("alpha should pass")
+	}
+	if err := IsAlpha("name", "Hello123"); err == nil {
+		t.Error("digits should fail alpha")
+	}
+}
+
+func TestIsAlphanumeric(t *testing.T) {
+	if err := IsAlphanumeric("code", "ABC123"); err != nil {
+		t.Error("alphanumeric should pass")
+	}
+	if err := IsAlphanumeric("code", "ABC-123"); err == nil {
+		t.Error("hyphen should fail alphanumeric")
+	}
+}
+
+func TestIsNumeric(t *testing.T) {
+	if err := IsNumeric("id", "12345"); err != nil {
+		t.Error("numeric should pass")
+	}
+	if err := IsNumeric("id", "123a5"); err == nil {
+		t.Error("letter should fail numeric")
+	}
+}
+
+func TestInRange(t *testing.T) {
+	if err := InRange("age", 25, 17, 65); err != nil {
+		t.Error("in range should pass")
+	}
+	if err := InRange("age", 16, 17, 65); err == nil {
+		t.Error("below range should fail")
+	}
+	if err := InRange("age", 66, 17, 65); err == nil {
+		t.Error("above range should fail")
+	}
+}
+
+func TestOneOf(t *testing.T) {
+	if err := OneOf("status", "active", []string{"active", "inactive", "deleted"}); err != nil {
+		t.Error("valid option should pass")
+	}
+	if err := OneOf("status", "unknown", []string{"active", "inactive"}); err == nil {
+		t.Error("invalid option should fail")
 	}
 }
