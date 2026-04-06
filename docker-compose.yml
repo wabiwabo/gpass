@@ -145,6 +145,78 @@ services:
     networks:
       - gpass-network
 
+  dukcapil-sim:
+    build: ./services/dukcapil-sim
+    restart: unless-stopped
+    ports:
+      - "4002:4002"
+    environment:
+      DUKCAPIL_SIM_PORT: "4002"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
+  identity:
+    build: ./services/identity
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+      dukcapil-sim:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
+  garudainfo:
+    build: ./services/garudainfo
+    restart: unless-stopped
+    ports:
+      - "4003:4003"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
 volumes:
   pgdata:
 
