@@ -112,6 +112,8 @@ External Request
 | 4007 | GarudaSign |
 | 4008 | Signing Simulator |
 | 4009 | GarudaPortal |
+| 4010 | GarudaAudit |
+| 4011 | GarudaNotify |
 | 5432 | PostgreSQL |
 | 6379 | Redis |
 | 8000 | Kong Proxy |
@@ -140,18 +142,46 @@ External Request
 | 013 | webhook_deliveries | GarudaPortal |
 | 014 | api_usage | GarudaPortal |
 | 015 | beneficial_owners | GarudaCorp (UBO) |
+| 016 | audit_events | GarudaAudit |
 
 ## Test Coverage
 
 | Module | Tests | Key Patterns |
 |--------|-------|-------------|
-| BFF | 60 | httptest, miniredis, table-driven |
-| Identity | 32 | Mock Dukcapil, bcrypt OTP |
+| BFF | 74 | httptest, miniredis, proxy, health aggregation |
+| Identity | 66 | Dukcapil mock, OTP, deletion (UU PDP), export, repositories |
 | GarudaInfo | 18 | Field-level consent filtering |
-| GarudaCorp | 72 | Role hierarchy, UBO analysis |
-| GarudaSign | 48 | Mock PAdES, hash verification |
-| GarudaPortal | 83 | API key generation, webhook delivery |
-| Shared Lib | 52+ | Race-condition tested, circuit breaker |
+| GarudaCorp | 72 | Role hierarchy, UBO (PP 13/2018) |
+| GarudaSign | 48 | Mock PAdES-B-LTA, hash verification |
+| GarudaPortal | 113 | API keys, webhooks, worker, repositories |
+| GarudaAudit | 27 | Immutable append-only, stats |
+| GarudaNotify | 16 | Email + SMS channels |
+| golib | 290 | 20 packages, race-tested, enterprise middleware |
 | Simulators | 44 | Synthetic data, cross-referencing NIKs |
 | Integration | 4 | Contract validation |
-| **Total** | **413+** | |
+| **Total** | **772** | |
+
+## golib Shared Library (20 packages)
+
+| Package | Purpose |
+|---------|---------|
+| `audit` | Audit context enrichment, IP extraction |
+| `cache` | TTL cache with GetOrSet, stats |
+| `circuitbreaker` | Fault isolation for external calls |
+| `config` | Runtime config values with change listeners |
+| `crypto` | HMAC-SHA256, random bytes, constant-time verify |
+| `database` | PostgreSQL pool, transactions, migrations, query builder |
+| `errors` | Structured errors with 30+ standard codes |
+| `events` | Event bus (Kafka abstraction, MemoryBus) |
+| `featureflags` | Runtime flags, percentage-based rollout |
+| `health` | Concurrent health checks |
+| `httpclient` | HTTP client with circuit breaker |
+| `httputil` | JSON, pagination, filtering, request parsing |
+| `middleware` | Recovery, RBAC, CORS, HSTS, Timeout, Idempotency, ServiceAuth, RateLimit, Correlation, APIVersion, SecureHeaders, RequestValidation |
+| `pii` | AES-256-GCM field encryption, masking, hash lookup |
+| `ratelimit` | Token bucket rate limiter |
+| `redis` | Redis client with health checking |
+| `resilience` | Fallback, Retry with exponential backoff |
+| `sanitize` | XSS, SQL injection, path traversal protection |
+| `server` | Graceful shutdown server |
+| `validate` | Input validation (NIK, email, UUID, URL) |
