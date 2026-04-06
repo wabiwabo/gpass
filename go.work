@@ -3,4 +3,5 @@ go 1.22.2
 use (
 	./apps/bff
 	./services/dukcapil-sim
+	./services/garudainfo
 )
