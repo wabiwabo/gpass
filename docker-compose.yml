@@ -355,6 +355,47 @@ services:
     networks:
       - gpass-network
 
+  garudaaudit:
+    build: ./services/garudaaudit
+    restart: unless-stopped
+    ports:
+      - "4010:4010"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
+  garudanotify:
+    build: ./services/garudanotify
+    restart: unless-stopped
+    ports:
+      - "4011:4011"
+    env_file: .env
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - gpass-network
+
   prometheus:
     image: prom/prometheus:v2.51.0
     restart: unless-stopped
