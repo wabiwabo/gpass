@@ -156,12 +156,12 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1967 | 130 packages, race-tested, enterprise patterns |
+| golib | 2012 | 135 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,903** | |
+| **Total** | **2,948** | |
 
-## golib Shared Library (130 packages)
+## golib Shared Library (135 packages)
 
 ### Security (13 packages)
 | Package | Purpose |

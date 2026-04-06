@@ -77,7 +77,7 @@ All notable changes to GarudaPass are documented in this file.
 - 5-year retention policy enforcement
 - Notification service (email + SMS channels)
 
-### Shared Library (golib — 130 packages)
+### Shared Library (golib — 135 packages)
 - **Security (13):** KMS envelope encryption, JWT ES256, permissions, fingerprinting, PII masking, digest hashing, mTLS, sanitization, crypto utils, IP allowlists, request signing
 - **Resilience (17):** Circuit breaker, bulkhead, singleflight, adaptive throttle, distributed lock, rate limiter, retry/fallback, budget, backpressure, connection pool, cascade fallback, circuit-breaker HTTP, semaphore, throttle, drain, webhook retry, retryable
 - **Observability (16):** W3C tracing, access log, dependency checks, health graphs, K8s probes, log sampling, metrics, tags, correlation, health aggregation, request logging, rate windows, status page, audit HTTP, trace HTTP, header propagation
@@ -98,9 +98,9 @@ All notable changes to GarudaPass are documented in this file.
 - 6 OpenAPI 3.1 specifications
 
 ### Metrics
-- 2,903 Go tests across all modules (race-detector verified)
+- 2,948 Go tests across all modules (race-detector verified)
 - 220+ conventional commits
-- 135,000+ lines of Go code
+- 140,000+ lines of Go code
 - 640+ Go files, 320+ test files
 - 12 Go services + 2 Next.js apps + 4 simulators
-- 130 shared library packages (zero external dependencies)
+- 135 shared library packages (zero external dependencies)
