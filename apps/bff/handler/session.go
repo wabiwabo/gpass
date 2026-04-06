@@ -51,7 +51,9 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, private")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(v)
 }

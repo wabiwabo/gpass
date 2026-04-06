@@ -64,4 +64,12 @@ func TestGetSessionAuthenticated(t *testing.T) {
 	if resp.CSRFToken != "csrf-token-123" {
 		t.Errorf("expected csrf-token-123, got %s", resp.CSRFToken)
 	}
+
+	// Verify security headers on session response
+	if cc := w.Header().Get("Cache-Control"); cc == "" {
+		t.Error("expected Cache-Control header on session response")
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "application/json; charset=utf-8" {
+		t.Errorf("expected application/json; charset=utf-8, got %s", ct)
+	}
 }
