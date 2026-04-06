@@ -1,0 +1,946 @@
+openapi: 3.1.0
+info:
+  title: GarudaPass GarudaPortal Service
+  version: 0.1.0
+  description: |
+    Developer portal service for GarudaPass.
+    Manages developer applications, API key lifecycle, webhook subscriptions,
+    API usage tracking, and internal key validation for the API gateway.
+
+servers:
+  - url: http://localhost:4009
+    description: Local development
+
+tags:
+  - name: Apps
+    description: Developer application management
+  - name: Keys
+    description: API key lifecycle management
+  - name: Webhooks
+    description: Webhook subscription management
+  - name: Usage
+    description: API usage statistics
+  - name: Internal
+    description: Internal endpoints (for API gateway)
+  - name: Health
+    description: Service health checks
+
+security:
+  - userIdHeader: []
+
+paths:
+  /api/v1/portal/apps:
+    post:
+      operationId: createApp
+      summary: Create a developer application
+      description: |
+        Creates a new developer application in sandbox environment with free tier (100 daily limit).
+      tags:
+        - Apps
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppRequest"
+      responses:
+        "201":
+          description: Application created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppResponse"
+        "400":
+          description: Invalid request or missing name.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listApps
+      summary: List applications owned by the user
+      tags:
+        - Apps
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+      responses:
+        "200":
+          description: List of applications.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apps:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AppResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/portal/apps/{id}:
+    get:
+      operationId: getApp
+      summary: Get application details
+      tags:
+        - Apps
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+      responses:
+        "200":
+          description: Application details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      operationId: updateApp
+      summary: Update application details
+      description: Partially update application name, description, or callback URLs.
+      tags:
+        - Apps
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAppRequest"
+      responses:
+        "200":
+          description: Application updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppResponse"
+        "400":
+          description: Invalid request body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/portal/apps/{app_id}/keys:
+    post:
+      operationId: createKey
+      summary: Create an API key
+      description: |
+        Generates a new API key for the application.
+        The plaintext key is returned ONCE in the response and is not stored.
+      tags:
+        - Keys
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateKeyRequest"
+      responses:
+        "201":
+          description: API key created. The plaintext_key is shown only once.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyResponse"
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listKeys
+      summary: List API keys for an application
+      description: Returns all keys for the application. Plaintext keys are never returned in list responses.
+      tags:
+        - Keys
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+      responses:
+        "200":
+          description: List of API keys.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keys:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/KeyResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/portal/apps/{app_id}/keys/{key_id}:
+    delete:
+      operationId: revokeKey
+      summary: Revoke an API key
+      tags:
+        - Keys
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Key ID to revoke.
+      responses:
+        "200":
+          description: Key revoked successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    example: "REVOKED"
+                  revoked_at:
+                    type: string
+                    format: date-time
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App or key not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/portal/apps/{app_id}/webhooks:
+    post:
+      operationId: subscribeWebhook
+      summary: Subscribe to webhook events
+      description: |
+        Creates a webhook subscription for the application.
+        A signing secret (whsec_...) is generated and returned once.
+        Webhook URLs must use HTTPS (localhost is exempt for development).
+      tags:
+        - Webhooks
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscribeWebhookRequest"
+      responses:
+        "201":
+          description: Webhook subscription created. Secret is shown only once.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+        "400":
+          description: Invalid request, missing URL or events, or non-HTTPS URL.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listWebhooks
+      summary: List webhook subscriptions
+      description: Returns all webhook subscriptions for the application. Secrets are not included.
+      tags:
+        - Webhooks
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+      responses:
+        "200":
+          description: List of webhook subscriptions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  webhooks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/portal/apps/{app_id}/webhooks/{webhook_id}:
+    delete:
+      operationId: deleteWebhook
+      summary: Delete a webhook subscription
+      description: Disables the webhook subscription. It will no longer receive events.
+      tags:
+        - Webhooks
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+        - name: webhook_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Webhook subscription ID.
+      responses:
+        "200":
+          description: Webhook disabled.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    example: "DISABLED"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App or webhook not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/portal/apps/{app_id}/usage:
+    get:
+      operationId: getUsage
+      summary: Get API usage statistics
+      description: |
+        Returns usage statistics for the application including daily breakdown
+        and per-endpoint breakdown. Defaults to the last 30 days if no date range is specified.
+      tags:
+        - Usage
+      parameters:
+        - $ref: "#/components/parameters/XUserID"
+        - name: app_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Application ID.
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Start date (YYYY-MM-DD). Defaults to 30 days ago.
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date (YYYY-MM-DD). Defaults to today.
+      responses:
+        "200":
+          description: Usage statistics.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageResponse"
+        "400":
+          description: Invalid date format or missing app_id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing X-User-ID header.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User does not own this app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: App not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /internal/keys/validate:
+    post:
+      operationId: validateKey
+      summary: Validate an API key (internal)
+      description: |
+        Internal endpoint used by the API gateway (Kong) to validate API keys.
+        Returns validation result with app metadata or an error reason.
+      tags:
+        - Internal
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ValidateKeyRequest"
+      responses:
+        "200":
+          description: Key is valid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyValidationResult"
+        "400":
+          description: Invalid request body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Key is invalid, expired, or revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyValidationResult"
+        "429":
+          description: Rate limit exceeded for the app.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KeyValidationResult"
+        "500":
+          description: Validation processing error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      tags:
+        - Health
+      security: []
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+components:
+  parameters:
+    XUserID:
+      name: X-User-ID
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Authenticated user ID.
+
+  securitySchemes:
+    userIdHeader:
+      type: apiKey
+      in: header
+      name: X-User-ID
+      description: User identity passed by the BFF or API gateway.
+    apiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for external integrations.
+
+  schemas:
+    CreateAppRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Application name.
+        description:
+          type: string
+          description: Application description.
+        callback_urls:
+          type: array
+          items:
+            type: string
+          description: OAuth callback URLs.
+
+    UpdateAppRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        callback_urls:
+          type: array
+          items:
+            type: string
+
+    AppResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        owner_user_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        environment:
+          type: string
+          enum:
+            - sandbox
+            - production
+        tier:
+          type: string
+          enum:
+            - free
+            - basic
+            - enterprise
+        daily_limit:
+          type: integer
+        callback_urls:
+          type: array
+          items:
+            type: string
+        oauth_client_id:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateKeyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Key name. Defaults to "Default" if empty.
+        expires_in_days:
+          type: integer
+          nullable: true
+          description: Key expiry in days. Null for non-expiring keys.
+
+    KeyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        key_prefix:
+          type: string
+          description: First characters of the key for identification.
+        name:
+          type: string
+        environment:
+          type: string
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - REVOKED
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        plaintext_key:
+          type: string
+          description: |
+            Full API key value. Only returned once at creation time.
+            Not included in list or subsequent get responses.
+
+    SubscribeWebhookRequest:
+      type: object
+      required:
+        - url
+        - events
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Webhook delivery URL (must be HTTPS, except localhost).
+        events:
+          type: array
+          items:
+            type: string
+          description: Event types to subscribe to.
+
+    WebhookResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - DISABLED
+        secret:
+          type: string
+          description: |
+            Webhook signing secret (whsec_...). Only returned at creation time.
+        created_at:
+          type: string
+          format: date-time
+
+    UsageResponse:
+      type: object
+      properties:
+        total_calls:
+          type: integer
+          format: int64
+        total_errors:
+          type: integer
+          format: int64
+        daily:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              calls:
+                type: integer
+                format: int64
+              errors:
+                type: integer
+                format: int64
+        by_endpoint:
+          type: array
+          items:
+            type: object
+            properties:
+              endpoint:
+                type: string
+              calls:
+                type: integer
+                format: int64
+              errors:
+                type: integer
+                format: int64
+
+    ValidateKeyRequest:
+      type: object
+      required:
+        - api_key
+      properties:
+        api_key:
+          type: string
+          description: The full API key to validate.
+
+    KeyValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        app_id:
+          type: string
+        environment:
+          type: string
+        tier:
+          type: string
+        daily_limit:
+          type: integer
+        error:
+          type: string
+          description: Error reason when valid is false.
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable error message.
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ok"
+        service:
+          type: string
+          example: "garudaportal"
