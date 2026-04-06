@@ -1,0 +1,528 @@
+---
+# Identity Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity
+  namespace: garudapass
+  labels:
+    app: identity
+    monitoring: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: identity
+  template:
+    metadata:
+      labels:
+        app: identity
+        monitoring: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: identity
+      containers:
+        - name: identity
+          image: garudapass/identity:latest
+          ports:
+            - containerPort: 4001
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: IDENTITY_PORT
+              value: "4001"
+            - name: DUKCAPIL_MODE
+              value: "real"
+            - name: DUKCAPIL_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: service-config
+                  key: dukcapil-url
+            - name: SERVER_NIK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: identity-secrets
+                  key: nik-key
+            - name: FIELD_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: identity-secrets
+                  key: field-encryption-key
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: url
+            - name: OTP_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4001
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity
+  namespace: garudapass
+  labels:
+    monitoring: "true"
+spec:
+  selector:
+    app: identity
+  ports:
+    - port: 4001
+      targetPort: 4001
+      name: http
+---
+# GarudaInfo Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garudainfo
+  namespace: garudapass
+  labels:
+    app: garudainfo
+    monitoring: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: garudainfo
+  template:
+    metadata:
+      labels:
+        app: garudainfo
+        monitoring: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: garudainfo
+          image: garudapass/garudainfo:latest
+          ports:
+            - containerPort: 4003
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: GARUDAINFO_PORT
+              value: "4003"
+            - name: GARUDAINFO_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: url
+            - name: IDENTITY_SERVICE_URL
+              value: http://identity:4001
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4003
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4003
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garudainfo
+  namespace: garudapass
+  labels:
+    monitoring: "true"
+spec:
+  selector:
+    app: garudainfo
+  ports:
+    - port: 4003
+      targetPort: 4003
+      name: http
+---
+# GarudaCorp Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garudacorp
+  namespace: garudapass
+  labels:
+    app: garudacorp
+    monitoring: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: garudacorp
+  template:
+    metadata:
+      labels:
+        app: garudacorp
+        monitoring: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: garudacorp
+          image: garudapass/garudacorp:latest
+          ports:
+            - containerPort: 4006
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: GARUDACORP_PORT
+              value: "4006"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: url
+            - name: AHU_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: service-config
+                  key: ahu-url
+            - name: OSS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: service-config
+                  key: oss-url
+            - name: SERVER_NIK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: identity-secrets
+                  key: nik-key
+            - name: IDENTITY_SERVICE_URL
+              value: http://identity:4001
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4006
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4006
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garudacorp
+  namespace: garudapass
+  labels:
+    monitoring: "true"
+spec:
+  selector:
+    app: garudacorp
+  ports:
+    - port: 4006
+      targetPort: 4006
+      name: http
+---
+# GarudaSign Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garudasign
+  namespace: garudapass
+  labels:
+    app: garudasign
+    monitoring: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: garudasign
+  template:
+    metadata:
+      labels:
+        app: garudasign
+        monitoring: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: garudasign
+          image: garudapass/garudasign:latest
+          ports:
+            - containerPort: 4007
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: GARUDASIGN_PORT
+              value: "4007"
+            - name: SIGNING_MODE
+              value: "real"
+            - name: EJBCA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: service-config
+                  key: ejbca-url
+            - name: DSS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: service-config
+                  key: dss-url
+            - name: GARUDASIGN_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: url
+            - name: IDENTITY_SERVICE_URL
+              value: http://identity:4001
+            - name: DOCUMENT_STORAGE_PATH
+              value: /data/signing
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: signing-data
+              mountPath: /data/signing
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4007
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4007
+            initialDelaySeconds: 3
+            periodSeconds: 5
+      volumes:
+        - name: signing-data
+          persistentVolumeClaim:
+            claimName: garudasign-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garudasign
+  namespace: garudapass
+  labels:
+    monitoring: "true"
+spec:
+  selector:
+    app: garudasign
+  ports:
+    - port: 4007
+      targetPort: 4007
+      name: http
+---
+# GarudaPortal Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garudaportal
+  namespace: garudapass
+  labels:
+    app: garudaportal
+    monitoring: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: garudaportal
+  template:
+    metadata:
+      labels:
+        app: garudaportal
+        monitoring: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: garudaportal
+          image: garudapass/garudaportal:latest
+          ports:
+            - containerPort: 4009
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: GARUDAPORTAL_PORT
+              value: "4009"
+            - name: GARUDAPORTAL_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: url
+            - name: IDENTITY_SERVICE_URL
+              value: http://identity:4001
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4009
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4009
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garudaportal
+  namespace: garudapass
+  labels:
+    monitoring: "true"
+spec:
+  selector:
+    app: garudaportal
+  ports:
+    - port: 4009
+      targetPort: 4009
+      name: http
+---
+# Secrets template (DO NOT commit real values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secrets
+  namespace: garudapass
+type: Opaque
+stringData:
+  url: "postgres://garudapass:CHANGE_ME@postgresql:5432/garudapass?sslmode=require"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secrets
+  namespace: garudapass
+type: Opaque
+stringData:
+  url: "redis://:CHANGE_ME@redis:6379"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-secrets
+  namespace: garudapass
+type: Opaque
+stringData:
+  nik-key: "CHANGE_ME_64_HEX_CHARS"
+  field-encryption-key: "CHANGE_ME_64_HEX_CHARS"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-config
+  namespace: garudapass
+data:
+  dukcapil-url: "https://api.dukcapil.go.id"
+  ahu-url: "https://ahu.kemenkumham.go.id"
+  oss-url: "https://oss.go.id"
+  ejbca-url: "https://ejbca.garudapass.id"
+  dss-url: "https://dss.garudapass.id"
+---
+# PVC for signing documents
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: garudasign-pvc
+  namespace: garudapass
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

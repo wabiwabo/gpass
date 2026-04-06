@@ -9,6 +9,7 @@ resources:
   - redis.yaml
   - keycloak.yaml
   - bff.yaml
+  - services.yaml
   - monitoring.yaml
   - network-policy.yaml
   - pdb.yaml
