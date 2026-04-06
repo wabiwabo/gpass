@@ -148,40 +148,123 @@ External Request
 
 | Module | Tests | Key Patterns |
 |--------|-------|-------------|
-| BFF | 74 | httptest, miniredis, proxy, health aggregation |
-| Identity | 66 | Dukcapil mock, OTP, deletion (UU PDP), export, repositories |
-| GarudaInfo | 18 | Field-level consent filtering |
-| GarudaCorp | 72 | Role hierarchy, UBO (PP 13/2018) |
-| GarudaSign | 48 | Mock PAdES-B-LTA, hash verification |
-| GarudaPortal | 113 | API keys, webhooks, worker, repositories |
-| GarudaAudit | 27 | Immutable append-only, stats |
-| GarudaNotify | 16 | Email + SMS channels |
-| golib | 290 | 20 packages, race-tested, enterprise middleware |
-| Simulators | 44 | Synthetic data, cross-referencing NIKs |
-| Integration | 4 | Contract validation |
-| **Total** | **772** | |
+| BFF | 124 | httptest, miniredis, proxy, CSRF, session security, health aggregation |
+| Identity | 101 | Dukcapil mock, OTP, deletion (UU PDP), export, NIK validation edge cases |
+| GarudaInfo | 53 | Field-level consent, multi-user isolation, grant/revoke lifecycle |
+| GarudaCorp | 93 | Role hierarchy, UBO (PP 13/2018), threshold boundary tests |
+| GarudaSign | 95 | Mock PAdES-B-LTA, certificate lifecycle, revocation edge cases |
+| GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
+| GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
+| GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
+| golib | 1366 | 80 packages, race-tested, enterprise patterns |
+| Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
+| Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
+| **Total** | **2,243** | |
 
-## golib Shared Library (20 packages)
+## golib Shared Library (80 packages)
 
+### Security (10 packages)
+| Package | Purpose |
+|---------|---------|
+| `crypto` | HMAC-SHA256, random bytes, multi-version KeyRing |
+| `digest` | SHA-256/384/512, CRC32, file hashing, multi-hash verification |
+| `fingerprint` | Request fingerprinting for bot/abuse detection |
+| `jwt` | ECDSA P-256 JWT signing/verification, JWKS endpoint |
+| `kms` | Envelope encryption (DEK/KEK) with local provider |
+| `mask` | Indonesian PII masking (NIK, email, phone, NPWP) |
+| `mtls` | Mutual TLS client with test certificate generation |
+| `permission` | Scope-based access control with role hierarchy |
+| `pii` | AES-256-GCM field encryption, masking, hash lookup |
+| `sanitize` | XSS, SQL injection, path traversal protection |
+
+### Resilience (8 packages)
+| Package | Purpose |
+|---------|---------|
+| `adaptive` | Error-rate-aware throttle with auto backoff/recovery |
+| `budget` | Time and call-count budget enforcement |
+| `bulkhead` | Semaphore-based concurrency isolation |
+| `circuitbreaker` | Fault isolation with advanced half-open probing |
+| `distlock` | Distributed mutex with fencing tokens |
+| `ratelimit` | Token bucket + sliding window rate limiter |
+| `resilience` | Fallback[T], Retry[T] with exponential backoff |
+| `singleflight` | Request coalescing for duplicate suppression |
+
+### Observability (8 packages)
+| Package | Purpose |
+|---------|---------|
+| `accesslog` | Request latency percentile tracking (p50/p95/p99) |
+| `depcheck` | Concurrent dependency health checking |
+| `healthgraph` | Service dependency DAG with cascade analysis |
+| `logging` | Structured logger with PII redaction and sampling |
+| `metrics` | Prometheus-compatible HTTP metrics middleware |
+| `probe` | K8s liveness/readiness/startup probe manager |
+| `tags` | Thread-safe observability tag propagation |
+| `tracing` | W3C Trace Context with span tracking |
+
+### API Standards (9 packages)
+| Package | Purpose |
+|---------|---------|
+| `apiresponse` | RFC 7807 Problem Details responses |
+| `cursor` | Opaque cursor-based pagination with generics |
+| `httputil` | JSON, pagination, filtering, batch API, versioned router |
+| `negotiate` | HTTP content negotiation (Accept, Encoding, Language) |
+| `pagination` | Offset-based pagination with generics Apply[T] |
+| `rateheader` | IETF RateLimit-* header utilities |
+| `reqvalidator` | Structured request validation with field errors |
+| `respwriter` | Response writer wrappers (Capture, Buffer, Pool) |
+| `webhook` | Ed25519 webhook signing (v2) |
+
+### Data Management (8 packages)
+| Package | Purpose |
+|---------|---------|
+| `audittrail` | Fluent audit entry builder with 13 action types |
+| `cqrs` | Command/query separation with bus dispatchers |
+| `eventsource` | Event sourcing with aggregate, snapshot, repository |
+| `idempotent` | Request deduplication with idempotency keys |
+| `lineage` | Data flow tracking for UU PDP compliance |
+| `outbox` | Transactional outbox pattern with poller |
+| `retention` | PP 71/2019 and UU PDP retention policy enforcer |
+| `seeddata` | JSON seed data loader with dependency ordering |
+
+### Infrastructure (17 packages)
 | Package | Purpose |
 |---------|---------|
 | `audit` | Audit context enrichment, IP extraction |
+| `batch` | Generic concurrent batch processing |
+| `bootstrap` | Standardized service startup with middleware chain |
 | `cache` | TTL cache with GetOrSet, stats |
-| `circuitbreaker` | Fault isolation for external calls |
-| `config` | Runtime config values with change listeners |
-| `crypto` | HMAC-SHA256, random bytes, constant-time verify |
+| `config` | Runtime config values with atomic swap |
+| `configloader` | Struct-tag config loading from env vars |
 | `database` | PostgreSQL pool, transactions, migrations, query builder |
-| `errors` | Structured errors with 30+ standard codes |
-| `events` | Event bus (Kafka abstraction, MemoryBus) |
-| `featureflags` | Runtime flags, percentage-based rollout |
-| `health` | Concurrent health checks |
-| `httpclient` | HTTP client with circuit breaker |
-| `httputil` | JSON, pagination, filtering, request parsing |
-| `middleware` | Recovery, RBAC, CORS, HSTS, Timeout, Idempotency, ServiceAuth, RateLimit, Correlation, APIVersion, SecureHeaders, RequestValidation |
-| `pii` | AES-256-GCM field encryption, masking, hash lookup |
-| `ratelimit` | Token bucket rate limiter |
+| `environ` | Typed environment variable helpers |
+| `errors` | Structured errors with stack traces, 30+ codes |
+| `events` | Event bus abstraction (LogPublisher, MemoryBus) |
+| `health` | Concurrent health checks, IETF format |
+| `httpclient` | HTTP client with circuit breaker, request signing |
 | `redis` | Redis client with health checking |
-| `resilience` | Fallback, Retry with exponential backoff |
-| `sanitize` | XSS, SQL injection, path traversal protection |
-| `server` | Graceful shutdown server |
-| `validate` | Input validation (NIK, email, UUID, URL) |
+| `requestid` | Request ID generation and middleware |
+| `server` | Graceful shutdown server with connection draining |
+| `shutdown` | Shutdown coordinator with priority-ordered hooks |
+| `token` | Cryptographic token generation (hex, base62, UUID, OTP) |
+
+### Domain (10 packages)
+| Package | Purpose |
+|---------|---------|
+| `chaos` | Fault injection with configurable error rates |
+| `contract` | Consumer-driven contract testing framework |
+| `dlq` | Dead letter queue with HTTP management |
+| `featureflags` | Runtime flags with percentage rollout |
+| `middleware` | 25+ middlewares: Recovery, RBAC, CORS, CSRF, SignVerify, Enrich, ErrorChain, etc. |
+| `oauth2` | Token introspection, JWKS, OIDC Discovery, Token Exchange |
+| `policy` | ABAC policy engine with wildcard matching |
+| `propagation` | Context propagation (8 headers) for inter-service calls |
+| `quota` | Monthly API quota management per tier |
+| `registry` | Service discovery with heartbeat |
+| `scheduler` | Periodic background job execution |
+| `sdkgen` | Go SDK code generator from API definitions |
+| `security` | Security event logger for SOC/SIEM (16 event types) |
+| `tenant` | Multi-tenant isolation middleware |
+| `timeutil` | Indonesian timezone support (WIB/WITA/WIT) |
+| `validate` | Input validation (NIK, email, UUID, password strength) |
+| `worker` | Generic worker pool for background tasks |
+| `workqueue` | Priority work queue with backpressure |

@@ -77,17 +77,14 @@ All notable changes to GarudaPass are documented in this file.
 - 5-year retention policy enforcement
 - Notification service (email + SMS channels)
 
-### Shared Library (golib - 23 packages)
-- Circuit breaker, HTTP client, retry with backoff
-- AES-256-GCM PII encryption, HMAC crypto
-- Input sanitization (XSS, SQL injection, path traversal)
-- RBAC middleware, OAuth2 introspection, JWKS client
-- Feature flags with percentage rollout
-- Idempotency middleware, request throttling
-- Pagination, filtering, query builder
-- Runtime config with atomic values
-- Prometheus metrics, audit context enrichment
-- Data lineage tracking
+### Shared Library (golib — 80 packages)
+- **Security (10):** KMS envelope encryption, JWT ES256, permissions, fingerprinting, PII masking, digest hashing, mTLS, sanitization
+- **Resilience (8):** Circuit breaker, bulkhead, singleflight, adaptive throttle, distributed lock, sliding window rate limiter, retry/fallback, request budget
+- **Observability (8):** W3C tracing, access log percentiles, dependency checks, health graphs, K8s probes, log sampling, metrics, tags
+- **API Standards (9):** RFC 7807 responses, cursor pagination, content negotiation, rate limit headers, request validation, response writers
+- **Data Management (8):** Transactional outbox, event sourcing, CQRS, idempotency, retention enforcement, audit trail, data lineage, seed data
+- **Infrastructure (17):** Graceful shutdown, config loader, environment helpers, request IDs, tokens, batch processing, caching, events, health checks
+- **Domain (20):** Middleware (25+ types), OAuth2/OIDC, ABAC policy, feature flags, chaos engineering, contract testing, multi-tenancy, Indonesian timezone support
 
 ### Infrastructure
 - Terraform IaC (AWS VPC, EKS, RDS, ElastiCache, ECR, Secrets Manager)
@@ -100,9 +97,9 @@ All notable changes to GarudaPass are documented in this file.
 - 6 OpenAPI 3.1 specifications
 
 ### Metrics
-- 833 Go tests across 14 modules
-- 99 conventional commits
-- 37,694 lines of Go code
-- 293 Go files, 121 test files
-- 12 Go services + 2 Next.js apps
-- 23 shared library packages
+- 2,243 Go tests across all modules (race-detector verified)
+- 180 conventional commits
+- 90,476 lines of Go code
+- 528 Go files, 242 test files
+- 12 Go services + 2 Next.js apps + 4 simulators
+- 80 shared library packages (zero external dependencies)

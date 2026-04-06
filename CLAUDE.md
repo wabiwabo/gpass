@@ -24,7 +24,7 @@ services/
   garudanotify/     — Email/SMS notifications (port 4011)
 
 packages/
-  golib/            — Shared Go library (23 packages)
+  golib/            — Shared Go library (80 packages, stdlib only)
   ui/               — Shared React/shadcn components
   config/           — Shared TypeScript/Tailwind config
 
@@ -40,7 +40,7 @@ infrastructure/
   security/         — Security policy, CORS documentation
 
 tests/
-  integration/      — Cross-service contract tests
+  integration/      — E2E flows (signing, portal, audit, identity, consent, corporate)
   load/             — k6 load tests (smoke, stress, soak)
 
 docs/
@@ -55,7 +55,7 @@ docs/
 ```bash
 make setup          # First-time setup
 make up             # Start Docker Compose (24 services)
-make test           # Run all Go tests (833+ tests)
+make test           # Run all Go tests (2,243+ tests)
 make test-race      # Run with race detector
 make test-count     # Count all tests across services
 make cover          # Coverage report per service
