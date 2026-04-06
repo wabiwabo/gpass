@@ -24,7 +24,7 @@ services/
   garudanotify/     — Email/SMS notifications (port 4011)
 
 packages/
-  golib/            — Shared Go library (104 packages, stdlib only)
+  golib/            — Shared Go library (109 packages, stdlib only)
   ui/               — Shared React/shadcn components
   config/           — Shared TypeScript/Tailwind config
 
@@ -55,7 +55,7 @@ docs/
 ```bash
 make setup          # First-time setup
 make up             # Start Docker Compose (24 services)
-make test           # Run all Go tests (2,662+ tests)
+make test           # Run all Go tests (2,703+ tests)
 make test-race      # Run with race detector
 make test-count     # Count all tests across services
 make cover          # Coverage report per service

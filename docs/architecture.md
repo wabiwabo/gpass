@@ -156,12 +156,12 @@ External Request
 | GarudaPortal | 181 | API keys, webhooks, worker, rotation, tier validation |
 | GarudaAudit | 68 | Immutable append-only, PP 71/2019 compliance, stats |
 | GarudaNotify | 70 | Email + SMS channels, templates, batch, validation |
-| golib | 1785 | 104 packages, race-tested, enterprise patterns |
+| golib | 1767 | 109 packages, race-tested, enterprise patterns |
 | Simulators | 76 | Synthetic data, cross-referencing NIKs, edge cases |
 | Integration | 16 | E2E flows: signing, portal, audit, identity, consent, corporate |
-| **Total** | **2,662** | |
+| **Total** | **2,703** | |
 
-## golib Shared Library (104 packages)
+## golib Shared Library (109 packages)
 
 ### Security (11 packages)
 | Package | Purpose |
@@ -213,13 +213,16 @@ External Request
 | `tags` | Thread-safe observability tag propagation |
 | `tracing` | W3C Trace Context with span tracking |
 
-### API Standards (13 packages)
+### API Standards (16 packages)
 | Package | Purpose |
 |---------|---------|
 | `apiresponse` | RFC 7807 Problem Details responses |
+| `apiver` | API versioning via header/path/query with deprecation |
+| `compress` | HTTP response compression (gzip/deflate) with min size |
 | `cursor` | Opaque cursor-based pagination with generics |
 | `httputil` | JSON, pagination, filtering, batch API, versioned router |
 | `jsonpatch` | RFC 6902 JSON Patch for partial resource updates |
+| `maxbody` | Request body size enforcement with per-route limits |
 | `multipart` | Safe multipart form handling with file upload validation |
 | `negotiate` | HTTP content negotiation (Accept, Encoding, Language) |
 | `paginatedb` | SQL pagination helpers for offset and keyset pagination |
@@ -244,7 +247,7 @@ External Request
 | `retention` | PP 71/2019 and UU PDP retention policy enforcer |
 | `seeddata` | JSON seed data loader with dependency ordering |
 
-### Infrastructure (21 packages)
+### Infrastructure (22 packages)
 | Package | Purpose |
 |---------|---------|
 | `audit` | Audit context enrichment, IP extraction |
@@ -260,6 +263,7 @@ External Request
 | `errors` | Structured errors with stack traces, 30+ codes |
 | `events` | Event bus abstraction (LogPublisher, MemoryBus) |
 | `health` | Concurrent health checks, IETF format |
+| `interval` | Periodic task execution with jitter and error stats |
 | `httpclient` | HTTP client with circuit breaker, request signing |
 | `iterset` | Generic set operations (union, intersection, difference) |
 | `redis` | Redis client with health checking |
@@ -270,7 +274,7 @@ External Request
 | `signctx` | Signal-aware context for graceful shutdown propagation |
 | `token` | Cryptographic token generation (hex, base62, UUID, OTP) |
 
-### Domain (10 packages)
+### Domain (11 packages)
 | Package | Purpose |
 |---------|---------|
 | `chaos` | Fault injection with configurable error rates |
@@ -278,6 +282,7 @@ External Request
 | `dlq` | Dead letter queue with HTTP management |
 | `featureflags` | Runtime flags with percentage rollout |
 | `middleware` | 25+ middlewares: Recovery, RBAC, CORS, CSRF, SignVerify, Enrich, ErrorChain, etc. |
+| `normalize` | Indonesian name, phone, email, NIK, NPWP, address normalization |
 | `oauth2` | Token introspection, JWKS, OIDC Discovery, Token Exchange |
 | `policy` | ABAC policy engine with wildcard matching |
 | `propagation` | Context propagation (8 headers) for inter-service calls |
