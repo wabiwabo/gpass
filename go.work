@@ -13,5 +13,6 @@ use (
 	./services/garudasign
 	./services/garudaportal
 	./services/garudaaudit
+	./services/garudanotify
 	./tests/integration
 )
