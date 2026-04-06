@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -90,16 +91,19 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Auth routes (no CSRF — these initiate/complete OAuth flows)
-	mux.HandleFunc("GET /auth/login", authHandler.Login)
-	mux.HandleFunc("GET /auth/callback", authHandler.Callback)
-	mux.HandleFunc("POST /auth/logout", authHandler.Logout)
-	mux.HandleFunc("GET /auth/session", sessionHandler.GetSession)
+	// Rate limited to 30 req/min per IP to prevent brute-force attacks
+	authMux := http.NewServeMux()
+	authMux.HandleFunc("GET /auth/login", authHandler.Login)
+	authMux.HandleFunc("GET /auth/callback", authHandler.Callback)
+	authMux.HandleFunc("POST /auth/logout", authHandler.Logout)
+	authMux.HandleFunc("GET /auth/session", sessionHandler.GetSession)
+	mux.Handle("/auth/", middleware.RateLimit(30)(authMux))
 
 	// Health check (no middleware — used by load balancers and K8s probes)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		fmt.Fprintf(w, `{"status":"ok","version":"%s","commit":"%s"}`, version, commit)
 	})
 
 	// Readiness check — verifies Redis connectivity

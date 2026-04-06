@@ -97,6 +97,16 @@ func NewRedisStore(client *redis.Client, encryptionKey []byte) (*RedisStore, err
 	return store, nil
 }
 
+// Encrypt encrypts data using AES-256-GCM. Exported for testing.
+func (s *RedisStore) Encrypt(plaintext []byte) ([]byte, error) {
+	return s.encrypt(plaintext)
+}
+
+// Decrypt decrypts data using AES-256-GCM. Exported for testing.
+func (s *RedisStore) Decrypt(ciphertext []byte) ([]byte, error) {
+	return s.decrypt(ciphertext)
+}
+
 func (s *RedisStore) encrypt(plaintext []byte) ([]byte, error) {
 	if s.gcm == nil {
 		return plaintext, nil

@@ -8,10 +8,15 @@ RUN go mod download && go mod verify
 
 COPY . .
 
-# Reproducible, statically linked binary with stripped debug symbols
+# Build args for version embedding
+ARG VERSION=dev
+ARG COMMIT=unknown
+ARG BUILD_TIME=unknown
+
+# Reproducible, statically linked binary with stripped debug symbols and version info
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -trimpath \
-    -ldflags="-s -w" \
+    -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.buildTime=${BUILD_TIME}" \
     -o /bff .
 
 # --- Runtime stage ---
