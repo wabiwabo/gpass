@@ -30,6 +30,7 @@ type APIKey struct {
 // KeyStore defines the interface for API key persistence.
 type KeyStore interface {
 	Create(key *APIKey) (*APIKey, error)
+	GetByID(id string) (*APIKey, error)
 	GetByHash(keyHash string) (*APIKey, error)
 	ListByApp(appID string) ([]*APIKey, error)
 	Revoke(id string) error
@@ -79,6 +80,18 @@ func (s *InMemoryKeyStore) Create(key *APIKey) (*APIKey, error) {
 
 	s.keys[key.ID] = copyKey(key)
 	return copyKey(key), nil
+}
+
+// GetByID retrieves a key by its ID.
+func (s *InMemoryKeyStore) GetByID(id string) (*APIKey, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	k, ok := s.keys[id]
+	if !ok {
+		return nil, ErrKeyNotFound
+	}
+	return copyKey(k), nil
 }
 
 // GetByHash retrieves a key by its SHA-256 hash.
