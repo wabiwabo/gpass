@@ -55,7 +55,7 @@ docs/
 ```bash
 make setup          # First-time setup
 make up             # Start Docker Compose (24 services)
-make test           # Run all Go tests (2,948+ tests)
+make test           # Run all Go tests (4,594+ tests)
 make test-race      # Run with race detector
 make test-count     # Count all tests across services
 make cover          # Coverage report per service
