@@ -103,7 +103,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.RequestID(httpx.Recover(mux)),
+		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(mux))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      60 * time.Second,
