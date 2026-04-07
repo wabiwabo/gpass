@@ -46,12 +46,15 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// Health check
+	// Health checks
+	// /health is a liveness probe — always 200 if the process is up
+	// /readyz is a readiness probe — 503 if the database is unreachable
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status":"ok","service":"garudaaudit"}`)
 	})
+	mux.HandleFunc("GET /readyz", store.ReadinessHandler(db, "garudaaudit"))
 
 	// Audit event routes
 	mux.HandleFunc("POST /api/v1/audit/events", auditHandler.IngestEvent)

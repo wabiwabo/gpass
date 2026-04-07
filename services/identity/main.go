@@ -91,6 +91,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status":"ok","service":"identity"}`)
 	})
+	mux.HandleFunc("GET /readyz", store.ReadinessHandler(delDB, "identity"))
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,

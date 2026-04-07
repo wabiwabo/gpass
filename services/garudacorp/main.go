@@ -72,6 +72,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status":"ok","service":"garudacorp"}`)
 	})
+	mux.HandleFunc("GET /readyz", store.ReadinessHandler(stores.DB, "garudacorp"))
 
 	// API routes
 	mux.HandleFunc("POST /api/v1/corp/register", registerHandler.Register)

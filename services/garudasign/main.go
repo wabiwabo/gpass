@@ -88,6 +88,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status":"ok","service":"garudasign"}`)
 	})
+	mux.HandleFunc("GET /readyz", store.ReadinessHandler(stores.DB, "garudasign"))
 
 	// Certificate routes
 	mux.HandleFunc("POST /api/v1/sign/certificates/request", certHandler.RequestCertificate)
