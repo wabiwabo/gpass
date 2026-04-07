@@ -19,6 +19,9 @@ func NewPostgresDocumentStore(db *sql.DB) *PostgresDocumentStore {
 }
 
 func (s *PostgresDocumentStore) Create(doc *signing.SignedDocument) (*signing.SignedDocument, error) {
+	if err := ValidateSignedDocument(doc); err != nil {
+		return nil, err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

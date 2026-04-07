@@ -20,6 +20,9 @@ func NewPostgresCertificateStore(db *sql.DB) *PostgresCertificateStore {
 }
 
 func (s *PostgresCertificateStore) Create(cert *signing.Certificate) (*signing.Certificate, error) {
+	if err := ValidateCertificate(cert); err != nil {
+		return nil, err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -99,6 +102,9 @@ func (s *PostgresCertificateStore) ListByUser(userID, statusFilter string) ([]*s
 }
 
 func (s *PostgresCertificateStore) UpdateStatus(id, status string, revokedAt *time.Time, reason string) error {
+	if err := ValidateUpdateCertStatus(status, reason); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

@@ -19,6 +19,9 @@ func NewPostgresRequestStore(db *sql.DB) *PostgresRequestStore {
 }
 
 func (s *PostgresRequestStore) Create(req *signing.SigningRequest) (*signing.SigningRequest, error) {
+	if err := ValidateSigningRequest(req); err != nil {
+		return nil, err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -77,6 +80,9 @@ func (s *PostgresRequestStore) ListByUser(userID string) ([]*signing.SigningRequ
 }
 
 func (s *PostgresRequestStore) UpdateStatus(id, status, certificateID, errorMsg string) error {
+	if err := ValidateUpdateRequestStatus(status, errorMsg); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
