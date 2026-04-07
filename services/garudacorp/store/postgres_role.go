@@ -18,6 +18,9 @@ func NewPostgresRoleStore(db *sql.DB) *PostgresRoleStore {
 }
 
 func (s *PostgresRoleStore) Assign(ctx context.Context, r *EntityRole) error {
+	if err := ValidateRole(r); err != nil {
+		return err
+	}
 	cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

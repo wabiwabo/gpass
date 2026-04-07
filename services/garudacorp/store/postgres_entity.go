@@ -18,6 +18,9 @@ func NewPostgresEntityStore(db *sql.DB) *PostgresEntityStore {
 }
 
 func (s *PostgresEntityStore) Create(ctx context.Context, e *Entity) error {
+	if err := ValidateEntity(e); err != nil {
+		return err
+	}
 	cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -142,6 +145,11 @@ func (s *PostgresEntityStore) loadShareholders(ctx context.Context, entityID str
 }
 
 func (s *PostgresEntityStore) AddOfficers(ctx context.Context, entityID string, officers []EntityOfficer) error {
+	for i := range officers {
+		if err := ValidateOfficer(&officers[i]); err != nil {
+			return err
+		}
+	}
 	cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -184,6 +192,11 @@ func (s *PostgresEntityStore) AddOfficers(ctx context.Context, entityID string, 
 }
 
 func (s *PostgresEntityStore) AddShareholders(ctx context.Context, entityID string, shareholders []EntityShareholder) error {
+	for i := range shareholders {
+		if err := ValidateShareholder(&shareholders[i]); err != nil {
+			return err
+		}
+	}
 	cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 

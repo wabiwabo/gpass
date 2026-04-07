@@ -21,6 +21,9 @@ func NewPostgresUBOStore(db *sql.DB) *PostgresUBOStore {
 
 // Save replaces all beneficial owners for an entity with the new analysis result.
 func (s *PostgresUBOStore) Save(result *ubo.AnalysisResult) error {
+	if err := ValidateUBOResult(result); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
