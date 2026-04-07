@@ -58,7 +58,8 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status":"ok","service":"garudainfo"}`)
 	})
-	mux.HandleFunc("GET /readyz", store.ReadinessHandler(db, "garudainfo"))
+	readiness := httpx.NewReadiness("garudainfo", db)
+	mux.HandleFunc("GET /readyz", readiness.Handler())
 
 	// Prometheus-format metrics for SLO/alerting
 	metrics := httpx.NewMetrics("garudainfo")
@@ -98,6 +99,10 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	readiness.Drain()
+	slog.Info("draining: /readyz now returns 503", "drain_seconds", 10)
+	time.Sleep(10 * time.Second)
 
 	if err := server.Shutdown(ctx); err != nil {
 		slog.Error("graceful shutdown failed", "error", err)

@@ -55,7 +55,8 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status":"ok","service":"garudaaudit"}`)
 	})
-	mux.HandleFunc("GET /readyz", store.ReadinessHandler(db, "garudaaudit"))
+	readiness := httpx.NewReadiness("garudaaudit", db)
+	mux.HandleFunc("GET /readyz", readiness.Handler())
 
 	// Prometheus-format metrics for SLO/alerting
 	metrics := httpx.NewMetrics("garudaaudit")
@@ -95,6 +96,13 @@ func main() {
 	sig := <-quit
 
 	slog.Info("shutdown signal received", "signal", sig.String())
+
+	// Drain: flip /readyz to 503 so kube-proxy removes us from Endpoints
+	// before we stop accepting connections. Sleep covers the propagation
+	// window (kube-proxy iptables refresh ~5–10s on default settings).
+	readiness.Drain()
+	slog.Info("draining: /readyz now returns 503", "drain_seconds", 10)
+	time.Sleep(10 * time.Second)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
