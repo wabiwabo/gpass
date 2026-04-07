@@ -52,7 +52,7 @@ groups:
           description: "Goroutine count is {{ $value }} — possible leak (handler not returning?)."
 
       - alert: HighLatency
-        expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 2
+        expr: histogram_quantile(0.99, sum by (service, le) (rate(http_request_duration_seconds_bucket[5m]))) > 2
         for: 5m
         labels:
           severity: warning

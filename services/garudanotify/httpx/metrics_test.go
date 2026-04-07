@@ -48,6 +48,30 @@ func TestMetrics_Instrument(t *testing.T) {
 	}
 }
 
+func TestMetrics_DurationHistogram(t *testing.T) {
+	m := NewMetrics("svc")
+	m.RecordDuration(0.001) // 1ms — falls in 5ms bucket and all above
+	m.RecordDuration(0.7)   // 700ms — falls in 1s bucket and above
+	m.RecordDuration(15)    // 15s — falls in no bucket but increments count
+
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	w := httptest.NewRecorder()
+	m.Handler(nil)(w, req)
+	body := w.Body.String()
+
+	for _, want := range []string{
+		`http_request_duration_seconds_bucket{service="svc",le="0.005"} 1`,
+		`http_request_duration_seconds_bucket{service="svc",le="1"} 2`,
+		`http_request_duration_seconds_bucket{service="svc",le="10"} 2`,
+		`http_request_duration_seconds_bucket{service="svc",le="+Inf"} 3`,
+		`http_request_duration_seconds_count{service="svc"} 3`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("missing %q in:\n%s", want, body)
+		}
+	}
+}
+
 func TestMetrics_InstrumentSkipsSelf(t *testing.T) {
 	m := NewMetrics("svc")
 	h := m.Instrument(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

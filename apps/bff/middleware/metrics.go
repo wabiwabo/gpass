@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // Metrics collects per-service request counters and exposes them in
@@ -15,12 +16,23 @@ import (
 // Counters are bucketed by status class (2xx/3xx/4xx/5xx) instead of
 // per-route to bound cardinality. Per-route metrics are an anti-pattern
 // at the application layer; route them via API gateway labels instead.
+// durationBuckets are the classic SLO histogram buckets in seconds.
+// Mirrors Prometheus client_golang DefBuckets (5ms..10s).
+var durationBuckets = []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10}
+
 type Metrics struct {
 	service string
 
 	mu       sync.Mutex
 	requests [6]uint64 // index by status class: 0=other, 1=1xx, 2=2xx, 3=3xx, 4=4xx, 5=5xx
 	panics   uint64
+
+	// Histogram of request durations (atomic counters per bucket).
+	// Bucket index i counts requests with duration <= durationBuckets[i].
+	// The +Inf bucket is implicit: total = sum of all requests.
+	histBuckets [11]uint64 // len(durationBuckets)
+	histSum     uint64     // microseconds (avoid float races)
+	histCount   uint64     // total observations (== +Inf bucket)
 }
 
 // NewMetrics creates a metrics collector for the named service.
@@ -43,6 +55,18 @@ func (m *Metrics) RecordPanic() {
 	atomic.AddUint64(&m.panics, 1)
 }
 
+// RecordDuration adds an observation to the duration histogram.
+// Cumulative bucket semantics: a 50ms request increments every bucket >= 0.05.
+func (m *Metrics) RecordDuration(seconds float64) {
+	for i, ub := range durationBuckets {
+		if seconds <= ub {
+			atomic.AddUint64(&m.histBuckets[i], 1)
+		}
+	}
+	atomic.AddUint64(&m.histSum, uint64(seconds*1_000_000))
+	atomic.AddUint64(&m.histCount, 1)
+}
+
 // Handler returns an http.HandlerFunc that emits Prometheus text format.
 // Optionally pass a *sql.DB to include connection pool gauges.
 func (m *Metrics) Handler(db *sql.DB) http.HandlerFunc {
@@ -59,6 +83,22 @@ func (m *Metrics) Handler(db *sql.DB) http.HandlerFunc {
 				m.service, class, atomic.LoadUint64(&m.requests[class]))
 			_ = count
 		}
+
+		// Histogram: cumulative buckets + sum + count
+		fmt.Fprintf(w, "# HELP http_request_duration_seconds Request duration histogram\n")
+		fmt.Fprintf(w, "# TYPE http_request_duration_seconds histogram\n")
+		for i, ub := range durationBuckets {
+			c := atomic.LoadUint64(&m.histBuckets[i])
+			fmt.Fprintf(w, "http_request_duration_seconds_bucket{service=%q,le=\"%g\"} %d\n",
+				m.service, ub, c)
+		}
+		histCount := atomic.LoadUint64(&m.histCount)
+		fmt.Fprintf(w, "http_request_duration_seconds_bucket{service=%q,le=\"+Inf\"} %d\n",
+			m.service, histCount)
+		fmt.Fprintf(w, "http_request_duration_seconds_sum{service=%q} %f\n",
+			m.service, float64(atomic.LoadUint64(&m.histSum))/1_000_000)
+		fmt.Fprintf(w, "http_request_duration_seconds_count{service=%q} %d\n",
+			m.service, histCount)
 
 		fmt.Fprintf(w, "# HELP http_panics_total Total panics recovered in HTTP handlers\n")
 		fmt.Fprintf(w, "# TYPE http_panics_total counter\n")
@@ -103,9 +143,11 @@ func (m *Metrics) Instrument(h http.Handler) http.Handler {
 			h.ServeHTTP(w, r)
 			return
 		}
+		start := time.Now()
 		rec := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 		h.ServeHTTP(rec, r)
 		m.RecordRequest(rec.statusCode)
+		m.RecordDuration(time.Since(start).Seconds())
 	})
 }
 
