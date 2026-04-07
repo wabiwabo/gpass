@@ -94,6 +94,7 @@ func main() {
 	// Prometheus-format metrics for SLO/alerting
 	metrics := httpx.NewMetrics("garudasign")
 	mux.HandleFunc("GET /metrics", metrics.Handler(stores.DB))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "garudasign"}))
 
 	// Certificate routes
 	mux.HandleFunc("POST /api/v1/sign/certificates/request", certHandler.RequestCertificate)

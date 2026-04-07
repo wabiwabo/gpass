@@ -51,6 +51,7 @@ func main() {
 	// Prometheus-format metrics for SLO/alerting
 	metrics := httpx.NewMetrics("garudanotify")
 	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "garudanotify"}))
 
 	// Notification routes
 	mux.HandleFunc("POST /api/v1/notify/otp", notifyHandler.SendOTP)

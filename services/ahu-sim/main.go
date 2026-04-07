@@ -37,6 +37,7 @@ func main() {
 	// Prometheus-format metrics
 	metrics := httpx.NewMetrics("ahu-sim")
 	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "ahu-sim"}))
 
 	// Company endpoints
 	mux.HandleFunc("POST /api/v1/ahu/company/search", handler.SearchCompany)

@@ -63,6 +63,7 @@ func main() {
 	// Prometheus-format metrics for SLO/alerting
 	metrics := httpx.NewMetrics("garudainfo")
 	mux.HandleFunc("GET /metrics", metrics.Handler(db))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "garudainfo"}))
 
 	// Consent endpoints
 	mux.HandleFunc("POST /api/v1/garudainfo/consents", consentHandler.Grant)

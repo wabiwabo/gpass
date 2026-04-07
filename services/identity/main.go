@@ -97,6 +97,7 @@ func main() {
 	// Prometheus-format metrics for SLO/alerting
 	metrics := httpx.NewMetrics("identity")
 	mux.HandleFunc("GET /metrics", metrics.Handler(delDB))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "identity"}))
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,

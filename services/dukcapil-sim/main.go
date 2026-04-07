@@ -37,6 +37,7 @@ func main() {
 	// Prometheus-format metrics
 	metrics := httpx.NewMetrics("dukcapil-sim")
 	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "dukcapil-sim"}))
 
 	// Verify endpoints
 	mux.HandleFunc("POST /api/v1/verify/nik", handler.VerifyNIK)

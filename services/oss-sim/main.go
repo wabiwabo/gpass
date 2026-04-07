@@ -37,6 +37,7 @@ func main() {
 	// Prometheus-format metrics
 	metrics := httpx.NewMetrics("oss-sim")
 	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "oss-sim"}))
 
 	// NIB endpoints
 	mux.HandleFunc("POST /api/v1/oss/nib/search", handler.SearchNIB)

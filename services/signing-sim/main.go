@@ -54,6 +54,7 @@ func main() {
 	// Prometheus-format metrics
 	metrics := httpx.NewMetrics("signing-sim")
 	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+	mux.HandleFunc("GET /version", httpx.VersionHandler(httpx.VersionInfo{Service: "signing-sim"}))
 
 	// API routes
 	mux.HandleFunc("POST /certificates/issue", certHandler.Issue)
