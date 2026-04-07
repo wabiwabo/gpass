@@ -163,7 +163,7 @@ func TestTags_ConcurrentAccess(t *testing.T) {
 			tags.Set(key, "value")
 			tags.Get(key)
 			tags.All()
-			tags.String()
+			_ = tags.String()
 			tags.Len()
 		}(i)
 	}

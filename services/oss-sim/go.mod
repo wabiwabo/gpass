@@ -1,6 +1,7 @@
 module github.com/garudapass/gpass/services/oss-sim
 
 go 1.25.0
+toolchain go1.25.8
 
 replace github.com/garudapass/gpass/packages/golib => ../../packages/golib
 

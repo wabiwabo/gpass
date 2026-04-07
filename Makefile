@@ -39,6 +39,17 @@ test-verbose: ## Run all Go tests with verbose output
 		cd $(CURDIR)/$$svc && go test ./... -v -count=1 || exit 1; \
 	done
 
+test-integration: ## Run integration tests against real Postgres (requires DB_URL env)
+	@: $${DB_URL:?DB_URL is required, e.g. postgres://garudapass:garudapass@localhost:5433/garudapass?sslmode=disable}
+	@for svc in garudasign garudainfo identity garudaaudit garudacorp; do \
+		echo "Integration $$svc..."; \
+		UPPER=$$(echo $$svc | tr a-z A-Z); \
+		ENVVAR=$${UPPER}_DB_URL; \
+		cd $(CURDIR)/services/$$svc && \
+			env $$ENVVAR=$$DB_URL DATABASE_URL=$$DB_URL go test -tags=integration ./store/ -count=1 || exit 1; \
+	done
+	@echo "All integration tests passed"
+
 test-race: ## Run all Go tests with race detector
 	@for svc in $(GO_SERVICES); do \
 		echo "Testing (race) $$svc..."; \

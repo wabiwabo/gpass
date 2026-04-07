@@ -187,7 +187,8 @@ func TestEnvelope_CanRetry(t *testing.T) {
 
 func TestEnvelope_RecordError(t *testing.T) {
 	env := Envelope{}
-	env.RecordError(json.Unmarshal([]byte("invalid"), nil)) // Some error.
+	var dst any
+	env.RecordError(json.Unmarshal([]byte("invalid"), &dst)) // Some error.
 
 	if env.Attempt != 1 {
 		t.Errorf("attempt: got %d", env.Attempt)
@@ -200,7 +201,7 @@ func TestEnvelope_RecordError(t *testing.T) {
 	}
 
 	firstErr := env.FirstError
-	env.RecordError(json.Unmarshal([]byte("bad"), nil))
+	env.RecordError(json.Unmarshal([]byte("bad"), &dst))
 	if env.Attempt != 2 {
 		t.Errorf("second attempt: got %d", env.Attempt)
 	}

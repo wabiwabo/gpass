@@ -4,16 +4,30 @@
 package mwnotfound
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 )
+
+// notFoundBody is the canonical 404 body. The path is set from r.URL.Path
+// and must be JSON-encoded to avoid injection if the path contains quotes,
+// backslashes, or other control characters that would break the JSON
+// envelope and could reflect into clients that render errors.
+type notFoundBody struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+	Path    string `json:"path,omitempty"`
+}
 
 // JSON returns a handler that responds with JSON 404.
 func JSON() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, `{"error":"not_found","message":"the requested resource was not found","path":"%s"}`, r.URL.Path)
+		_ = json.NewEncoder(w).Encode(notFoundBody{
+			Error:   "not_found",
+			Message: "the requested resource was not found",
+			Path:    r.URL.Path,
+		})
 	})
 }
 
@@ -22,20 +36,27 @@ func Handler(message string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, `{"error":"not_found","message":"%s"}`, message)
+		_ = json.NewEncoder(w).Encode(notFoundBody{
+			Error:   "not_found",
+			Message: message,
+		})
 	})
 }
 
 // Middleware wraps a mux and handles 404s with JSON response.
 func Middleware(mux http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Use a response recorder to check if the mux wrote anything
+		// Use a response recorder to check if the mux wrote anything.
 		rec := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		mux.ServeHTTP(rec, r)
-		// If the mux returned 404 and hasn't written a body, write JSON
+		// If the mux returned 404 and hasn't written a body, write JSON.
 		if rec.status == http.StatusNotFound && !rec.bodyWritten {
 			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprintf(w, `{"error":"not_found","message":"the requested resource was not found","path":"%s"}`, r.URL.Path)
+			_ = json.NewEncoder(w).Encode(notFoundBody{
+				Error:   "not_found",
+				Message: "the requested resource was not found",
+				Path:    r.URL.Path,
+			})
 		}
 	})
 }

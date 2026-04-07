@@ -4,6 +4,7 @@
 package apiver
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -130,7 +131,12 @@ func Middleware(cfg Config) func(http.Handler) http.Handler {
 			if err != nil {
 				w.Header().Set("Content-Type", "application/problem+json")
 				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintf(w, `{"type":"about:blank","title":"Invalid API Version","status":400,"detail":"%s"}`, err.Error())
+				// Use json.Marshal on the caller-supplied error text so that
+				// any quotes/backslashes are escaped — writing it with a
+				// raw %s would break the JSON envelope and open a reflected
+				// injection path through the Accept-Version header.
+				detail, _ := json.Marshal(err.Error())
+				fmt.Fprintf(w, `{"type":"about:blank","title":"Invalid API Version","status":400,"detail":%s}`, detail)
 				return
 			}
 

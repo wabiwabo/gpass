@@ -6,44 +6,80 @@ namespace: garudapass
 resources:
   - ../../base
 
+# Production-only overrides.
+#
+# Bare strategic-merge patches without a `target:` selector cannot match
+# resources that already carry a namespace in the base (kustomize v5
+# rejects them with "[noNs]"). Each patch below uses an explicit target
+# selector so it unambiguously addresses the namespaced Deployment.
 patches:
-  # Production: increase replica counts
-  - patch: |-
+  # Replica bumps
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: bff
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: bff
       spec:
         replicas: 3
-  - patch: |-
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: identity
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: identity
       spec:
         replicas: 3
-  - patch: |-
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: garudacorp
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: garudacorp
       spec:
         replicas: 2
-  - patch: |-
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: garudasign
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: garudasign
       spec:
         replicas: 2
-  - patch: |-
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: garudaportal
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: garudaportal
       spec:
         replicas: 3
-  - patch: |-
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: garudaaudit
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:
@@ -51,8 +87,13 @@ patches:
       spec:
         replicas: 2
 
-  # Production: increase resource limits
-  - patch: |-
+  # Production resource bump for bff.
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: bff
+    patch: |-
       apiVersion: apps/v1
       kind: Deployment
       metadata:

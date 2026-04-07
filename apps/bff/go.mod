@@ -1,6 +1,7 @@
 module github.com/garudapass/gpass/apps/bff
 
 go 1.22.2
+toolchain go1.25.8
 
 require (
 	github.com/alicebob/miniredis/v2 v2.37.0

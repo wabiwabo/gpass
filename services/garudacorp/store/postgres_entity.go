@@ -53,10 +53,17 @@ func (s *PostgresEntityStore) GetBySKNumber(ctx context.Context, sk string) (*En
 	return s.getEntity(ctx, "ahu_sk_number = $1", sk)
 }
 
+// getEntity's `where` parameter is intentionally a static SQL fragment
+// supplied by sibling methods in this file (GetByID: "id = $1",
+// GetBySKNumber: "ahu_sk_number = $1"). The caller-supplied value is
+// the positional arg, which travels through the parameterized query. No
+// user-controlled data reaches the SQL text; gosec G201 is a false
+// positive here because it cannot prove the caller invariant.
 func (s *PostgresEntityStore) getEntity(ctx context.Context, where string, arg interface{}) (*Entity, error) {
 	cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	// #nosec G201 -- `where` is a static literal set by sibling methods; arg is parameterized.
 	query := fmt.Sprintf(`
 		SELECT id, ahu_sk_number, name, entity_type, status,
 			COALESCE(npwp,''), COALESCE(address,''),

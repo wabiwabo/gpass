@@ -64,9 +64,21 @@ func (c *Chain[T]) Get(ctx context.Context, key string) (Result[T], error) {
 			c.recordHit(src.Name)
 
 			// Back-populate missed sources.
+			//
+			// Back-population intentionally outlives the request context
+			// (we don't want a client disconnect to abort a cold-cache
+			// warm-up that's already in flight), but it must NOT run with
+			// an unbounded context.Background() — that would let a slow
+			// downstream keep goroutines pinned indefinitely. Derive a
+			// fresh context with a hard 30s ceiling per back-populate.
 			for j := 0; j < i; j++ {
 				if c.sources[j].Store != nil {
-					go c.sources[j].Store(context.Background(), key, value)
+					store := c.sources[j].Store
+					go func(s func(context.Context, string, T) error) {
+						bpCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+						defer cancel()
+						_ = s(bpCtx, key, value)
+					}(store)
 				}
 			}
 
