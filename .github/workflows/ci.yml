@@ -39,7 +39,7 @@ jobs:
         working-directory: ${{ matrix.service.dir }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-go@v5
         with:
@@ -86,7 +86,7 @@ jobs:
         working-directory: ${{ matrix.service }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-go@v5
         with:
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: pnpm/action-setup@v4
         with:
@@ -127,7 +127,7 @@ jobs:
     needs: [go-test]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build all service images
         env:
@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate Keycloak realm JSON
         run: python3 -m json.tool infrastructure/keycloak/realm-export.json > /dev/null
