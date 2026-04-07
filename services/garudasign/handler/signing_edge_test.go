@@ -634,19 +634,21 @@ func TestUpload_PDFExtensionCaseInsensitive(t *testing.T) {
 func TestListCertificates_FilterByStatus(t *testing.T) {
 	certStore := store.NewInMemoryCertificateStore()
 
-	// Create ACTIVE and REVOKED certificates for the same user
-	certStore.Create(&signing.Certificate{
-		UserID:       "user-filter",
-		Status:       "ACTIVE",
-		SerialNumber: "SN-ACTIVE",
-	})
-	revokedCert, _ := certStore.Create(&signing.Certificate{
+	// Seed a cert that will be revoked, then create the surviving ACTIVE.
+	// Enforced invariant: only one ACTIVE per user at a time — so we must
+	// revoke the first before creating the second.
+	toRevoke, _ := certStore.Create(&signing.Certificate{
 		UserID:       "user-filter",
 		Status:       "ACTIVE",
 		SerialNumber: "SN-TO-REVOKE",
 	})
 	now := time.Now()
-	certStore.UpdateStatus(revokedCert.ID, "REVOKED", &now, "superseded")
+	certStore.UpdateStatus(toRevoke.ID, "REVOKED", &now, "superseded")
+	certStore.Create(&signing.Certificate{
+		UserID:       "user-filter",
+		Status:       "ACTIVE",
+		SerialNumber: "SN-ACTIVE",
+	})
 
 	handler := NewCertificateHandler(CertificateDeps{
 		CertStore:    certStore,

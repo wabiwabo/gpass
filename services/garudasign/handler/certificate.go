@@ -91,6 +91,10 @@ func (h *CertificateHandler) RequestCertificate(w http.ResponseWriter, r *http.R
 		FingerprintSHA256: issueResp.FingerprintSHA256,
 	})
 	if err != nil {
+		if err == store.ErrActiveCertificateExists {
+			writeError(w, http.StatusConflict, "active_cert_exists", "User already has an active certificate")
+			return
+		}
 		slog.Error("failed to store certificate", "error", err, "user_id", userID)
 		writeError(w, http.StatusInternalServerError, "store_failed", "Failed to store certificate")
 		return

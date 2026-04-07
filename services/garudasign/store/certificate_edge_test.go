@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -8,11 +9,19 @@ import (
 	"github.com/garudapass/gpass/services/garudasign/signing"
 )
 
+// TestCertificateConcurrentCreate pins the enforced "one ACTIVE
+// certificate per user" invariant under concurrent creation. Exactly
+// one Create must succeed; the remaining n-1 must return
+// ErrActiveCertificateExists. This guarantees the store itself is the
+// source of truth for the invariant, eliminating the TOCTOU race
+// between a handler's pre-check and its subsequent Create call.
 func TestCertificateConcurrentCreate(t *testing.T) {
 	s := NewInMemoryCertificateStore()
 	var wg sync.WaitGroup
 	n := 100
 
+	var successes, conflicts int
+	var mu sync.Mutex
 	for i := 0; i < n; i++ {
 		wg.Add(1)
 		go func() {
@@ -24,27 +33,43 @@ func TestCertificateConcurrentCreate(t *testing.T) {
 				FingerprintSHA256: "abc123",
 			}
 			_, err := s.Create(cert)
-			if err != nil {
-				t.Errorf("Create: %v", err)
+			mu.Lock()
+			defer mu.Unlock()
+			if err == nil {
+				successes++
+			} else if err == ErrActiveCertificateExists {
+				conflicts++
+			} else {
+				t.Errorf("unexpected error: %v", err)
 			}
 		}()
 	}
 	wg.Wait()
 
+	if successes != 1 {
+		t.Errorf("successes = %d, want 1", successes)
+	}
+	if conflicts != n-1 {
+		t.Errorf("conflicts = %d, want %d", conflicts, n-1)
+	}
 	list, _ := s.ListByUser("user-concurrent", "")
-	if len(list) != n {
-		t.Errorf("certs: got %d, want %d", len(list), n)
+	if len(list) != 1 {
+		t.Errorf("active certs: got %d, want 1", len(list))
 	}
 }
 
 func TestCertificateConcurrentReadWrite(t *testing.T) {
 	s := NewInMemoryCertificateStore()
 
-	// Create some certs
+	// Create some certs. Only the first ACTIVE cert per user is
+	// permitted; use distinct UserIDs so all 20 Creates succeed.
 	ids := make([]string, 20)
 	for i := 0; i < 20; i++ {
-		cert := &signing.Certificate{UserID: "user-rw", Status: "ACTIVE"}
-		created, _ := s.Create(cert)
+		cert := &signing.Certificate{UserID: fmt.Sprintf("user-rw-%d", i), Status: "ACTIVE"}
+		created, err := s.Create(cert)
+		if err != nil {
+			t.Fatalf("seed create: %v", err)
+		}
 		ids[i] = created.ID
 	}
 
@@ -71,8 +96,11 @@ func TestCertificateUniqueIDs(t *testing.T) {
 	ids := make(map[string]bool)
 
 	for i := 0; i < 200; i++ {
-		cert := &signing.Certificate{UserID: "user-id", Status: "ACTIVE"}
-		created, _ := s.Create(cert)
+		cert := &signing.Certificate{UserID: fmt.Sprintf("user-id-%d", i), Status: "ACTIVE"}
+		created, err := s.Create(cert)
+		if err != nil {
+			t.Fatalf("create: %v", err)
+		}
 		if ids[created.ID] {
 			t.Fatalf("duplicate ID: %s", created.ID)
 		}
@@ -119,23 +147,22 @@ func TestGetActiveByUserAllRevoked(t *testing.T) {
 
 func TestListByUserStatusFilter(t *testing.T) {
 	s := NewInMemoryCertificateStore()
-	s.Create(&signing.Certificate{UserID: "u1", Status: "ACTIVE"})
-	s.Create(&signing.Certificate{UserID: "u1", Status: "REVOKED"})
+	// Build a multi-status history for u1 while respecting the
+	// "one ACTIVE per user" invariant: seed one cert, revoke it,
+	// then create the next ACTIVE.
+	first, _ := s.Create(&signing.Certificate{UserID: "u1", Status: "ACTIVE"})
+	now := time.Now()
+	_ = s.UpdateStatus(first.ID, "REVOKED", &now, "rotated")
 	s.Create(&signing.Certificate{UserID: "u1", Status: "ACTIVE"})
 
-	// No filter
 	all, _ := s.ListByUser("u1", "")
-	if len(all) != 3 {
+	if len(all) != 2 {
 		t.Errorf("all: got %d", len(all))
 	}
-
-	// Active only
 	active, _ := s.ListByUser("u1", "ACTIVE")
-	if len(active) != 2 {
+	if len(active) != 1 {
 		t.Errorf("active: got %d", len(active))
 	}
-
-	// Revoked only
 	revoked, _ := s.ListByUser("u1", "REVOKED")
 	if len(revoked) != 1 {
 		t.Errorf("revoked: got %d", len(revoked))

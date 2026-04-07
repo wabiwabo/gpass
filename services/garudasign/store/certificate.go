@@ -32,9 +32,26 @@ func NewInMemoryCertificateStore() *InMemoryCertificateStore {
 	}
 }
 
+// ErrActiveCertificateExists is returned by Create when a user already
+// has an ACTIVE certificate. Enforced atomically under the store mutex
+// so concurrent Create calls for the same user cannot both succeed.
+var ErrActiveCertificateExists = fmt.Errorf("active certificate already exists for user")
+
 func (s *InMemoryCertificateStore) Create(cert *signing.Certificate) (*signing.Certificate, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	// Enforce "one ACTIVE cert per user" invariant atomically. Checking
+	// GetActiveByUser in the handler is TOCTOU-racy; two goroutines can
+	// both pass the check and both create active certs. The store is the
+	// source of truth for this invariant.
+	if cert.Status == "ACTIVE" && cert.UserID != "" {
+		for _, existing := range s.certs {
+			if existing.UserID == cert.UserID && existing.Status == "ACTIVE" {
+				return nil, ErrActiveCertificateExists
+			}
+		}
+	}
 
 	cert.ID = generateID()
 	now := time.Now()
