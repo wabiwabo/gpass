@@ -86,6 +86,31 @@ cd services/garudacorp && go build -o /dev/null .
 - Minimum 80% overall coverage per service
 - golib: 100% interface coverage, race-free
 
+### Standard Service Contract
+
+Every backend service in `services/` (and BFF) MUST expose these
+unauthenticated endpoints. They are scraped by kubelet, Prometheus,
+and CI smoke tests:
+
+| Endpoint | Purpose | Body |
+|---|---|---|
+| `GET /health` | Liveness probe — process is up | `{"status":"ok",...}` |
+| `GET /readyz` | Readiness probe — DB pingable | `{"status":"ok","db":"postgres",...}` |
+| `GET /metrics` | Prometheus text format | counters + gauges + histogram |
+| `GET /version` | Build identification | `{"service","commit","go_version",...}` |
+
+Standard middleware chain (outermost first), provided by `packages/golib/httpx`:
+
+```
+SecurityHeaders → RequestID → AccessLog → Metrics.Instrument
+  → Recover → MaxBodyBytes → Timeout(30s) → mux
+```
+
+Bringing up a new service: copy `services/garudaaudit/main.go` as a
+template, swap the service name, replace handlers. The middleware,
+endpoints, panic recovery, request IDs, structured logs, metrics,
+and security headers are all inherited from `golib/httpx`.
+
 ### Security Architecture
 
 - Sessions: AES-256-GCM encrypted in Redis
