@@ -155,3 +155,12 @@ func (s *InMemoryConsentStore) ExpireStale(_ context.Context) (int, error) {
 	}
 	return count, nil
 }
+
+// ExpireConsentForTest is a test helper that forces a consent to EXPIRED status.
+func (s *InMemoryConsentStore) ExpireConsentForTest(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if c, ok := s.consents[id]; ok {
+		c.Status = "EXPIRED"
+	}
+}
