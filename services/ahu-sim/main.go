@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/garudapass/gpass/services/ahu-sim/handler"
+	"github.com/garudapass/gpass/services/ahu-sim/httpx"
 )
 
 func main() {
@@ -33,6 +34,10 @@ func main() {
 		fmt.Fprint(w, `{"status":"ok","service":"ahu-sim"}`)
 	})
 
+	// Prometheus-format metrics
+	metrics := httpx.NewMetrics("ahu-sim")
+	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+
 	// Company endpoints
 	mux.HandleFunc("POST /api/v1/ahu/company/search", handler.SearchCompany)
 	mux.HandleFunc("GET /api/v1/ahu/company/{sk}/officers", handler.GetOfficers)
@@ -40,7 +45,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + port,
-		Handler:           mux,
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,

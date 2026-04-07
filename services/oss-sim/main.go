@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/garudapass/gpass/services/oss-sim/handler"
+	"github.com/garudapass/gpass/services/oss-sim/httpx"
 )
 
 func main() {
@@ -33,12 +34,16 @@ func main() {
 		fmt.Fprint(w, `{"status":"ok","service":"oss-sim"}`)
 	})
 
+	// Prometheus-format metrics
+	metrics := httpx.NewMetrics("oss-sim")
+	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+
 	// NIB endpoints
 	mux.HandleFunc("POST /api/v1/oss/nib/search", handler.SearchNIB)
 
 	server := &http.Server{
 		Addr:              ":" + port,
-		Handler:           mux,
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,

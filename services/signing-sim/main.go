@@ -12,6 +12,7 @@ import (
 
 	"github.com/garudapass/gpass/services/signing-sim/ca"
 	"github.com/garudapass/gpass/services/signing-sim/handler"
+	"github.com/garudapass/gpass/services/signing-sim/httpx"
 )
 
 func main() {
@@ -50,13 +51,17 @@ func main() {
 		fmt.Fprint(w, `{"status":"ok","service":"signing-sim"}`)
 	})
 
+	// Prometheus-format metrics
+	metrics := httpx.NewMetrics("signing-sim")
+	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+
 	// API routes
 	mux.HandleFunc("POST /certificates/issue", certHandler.Issue)
 	mux.HandleFunc("POST /sign/pades", signHandler.Sign)
 
 	server := &http.Server{
 		Addr:              ":" + port,
-		Handler:           mux,
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      60 * time.Second,

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/garudapass/gpass/services/dukcapil-sim/handler"
+	"github.com/garudapass/gpass/services/dukcapil-sim/httpx"
 )
 
 func main() {
@@ -33,6 +34,10 @@ func main() {
 		fmt.Fprint(w, `{"status":"ok","service":"dukcapil-sim"}`)
 	})
 
+	// Prometheus-format metrics
+	metrics := httpx.NewMetrics("dukcapil-sim")
+	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+
 	// Verify endpoints
 	mux.HandleFunc("POST /api/v1/verify/nik", handler.VerifyNIK)
 	mux.HandleFunc("POST /api/v1/verify/demographic", handler.VerifyDemographic)
@@ -40,7 +45,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + port,
-		Handler:           mux,
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,
