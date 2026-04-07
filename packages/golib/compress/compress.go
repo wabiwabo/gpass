@@ -121,7 +121,12 @@ func (cw *compressWriter) Write(b []byte) (int, error) {
 		if len(cw.buf) < cw.minSize {
 			return len(b), nil // Buffer until we have enough.
 		}
+		// flush() drains the entire buffer (including the bytes from the
+		// current Write call) into the underlying writer. Returning here
+		// is required — falling through to cw.writer.Write(b) below would
+		// emit those same bytes a second time, doubling the response body.
 		cw.flush()
+		return len(b), nil
 	}
 
 	if cw.writer != nil {
