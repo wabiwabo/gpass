@@ -25,7 +25,12 @@ type gcFakeConn struct{ err error }
 
 func (c *gcFakeConn) Prepare(_ string) (driver.Stmt, error) { return nil, c.err }
 func (c *gcFakeConn) Close() error                          { return nil }
-func (c *gcFakeConn) Begin() (driver.Tx, error)             { return &gcFakeTx{}, nil }
+func (c *gcFakeConn) Begin() (driver.Tx, error) {
+	if c.err != nil {
+		return nil, c.err
+	}
+	return &gcFakeTx{}, nil
+}
 
 func (c *gcFakeConn) QueryContext(_ context.Context, _ string, _ []driver.NamedValue) (driver.Rows, error) {
 	if c.err != nil {
