@@ -28,6 +28,14 @@ type Pool[T any] struct {
 	submitted atomic.Int64
 	completed atomic.Int64
 	failed    atomic.Int64
+
+	// drained is the accumulated result slice; drainDone is closed when
+	// the background drain goroutine exits. Both are populated by Start
+	// and consumed by Wait. The drain goroutine is what prevents the
+	// "more tasks than results buffer" deadlock — workers can keep
+	// flushing while wg.Wait sits on the workers themselves.
+	drained   []Result[T]
+	drainDone chan struct{}
 }
 
 type task[T any] struct {
@@ -50,12 +58,22 @@ func New[T any](workers int) *Pool[T] {
 	return p
 }
 
-// Start launches the worker goroutines.
+// Start launches the worker goroutines and a background drain goroutine
+// that pulls results into an internal slice. The drain prevents workers
+// from blocking on the results channel when there are more tasks than
+// fit in cap(results).
 func (p *Pool[T]) Start(ctx context.Context) {
 	for i := 0; i < p.workers; i++ {
 		p.wg.Add(1)
 		go p.worker(ctx)
 	}
+	p.drainDone = make(chan struct{})
+	go func() {
+		for r := range p.results {
+			p.drained = append(p.drained, r)
+		}
+		close(p.drainDone)
+	}()
 }
 
 func (p *Pool[T]) worker(ctx context.Context) {
@@ -93,16 +111,18 @@ func (p *Pool[T]) Close() {
 }
 
 // Wait waits for all workers to finish and returns all results.
+//
+// Order of operations matters: close the tasks channel so workers exit
+// their range loop, wait for them, close the results channel so the
+// background drain goroutine exits its range loop, then read the
+// accumulated drained slice. The drain goroutine started in Start() is
+// what keeps workers unblocked across the cap(results) boundary.
 func (p *Pool[T]) Wait() []Result[T] {
 	p.Close()
 	p.wg.Wait()
 	close(p.results)
-
-	var results []Result[T]
-	for r := range p.results {
-		results = append(results, r)
-	}
-	return results
+	<-p.drainDone
+	return p.drained
 }
 
 // Stats returns execution statistics.
