@@ -12,6 +12,7 @@ import (
 
 	"github.com/garudapass/gpass/services/garudaportal/config"
 	"github.com/garudapass/gpass/services/garudaportal/handler"
+	"github.com/garudapass/gpass/services/garudaportal/httpx"
 	"github.com/garudapass/gpass/services/garudaportal/store"
 )
 
@@ -77,7 +78,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           mux,
+		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes)))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,

@@ -13,6 +13,7 @@ import (
 	"github.com/garudapass/gpass/services/garudanotify/channel"
 	"github.com/garudapass/gpass/services/garudanotify/config"
 	"github.com/garudapass/gpass/services/garudanotify/handler"
+	"github.com/garudapass/gpass/services/garudanotify/httpx"
 )
 
 func main() {
@@ -53,7 +54,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           mux,
+		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes)))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,
