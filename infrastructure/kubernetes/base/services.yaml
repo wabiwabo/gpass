@@ -87,7 +87,7 @@ spec:
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: 4001
             initialDelaySeconds: 3
             periodSeconds: 5
@@ -168,7 +168,7 @@ spec:
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: 4003
             initialDelaySeconds: 3
             periodSeconds: 5
@@ -264,7 +264,7 @@ spec:
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: 4006
             initialDelaySeconds: 3
             periodSeconds: 5
@@ -362,7 +362,7 @@ spec:
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: 4007
             initialDelaySeconds: 3
             periodSeconds: 5
@@ -452,7 +452,7 @@ spec:
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /readyz
               port: 4009
             initialDelaySeconds: 3
             periodSeconds: 5
