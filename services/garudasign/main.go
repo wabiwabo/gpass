@@ -108,7 +108,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.SecurityHeaders(httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(httpx.Timeout(mux, httpx.DefaultRequestTimeout), httpx.DefaultMaxBodyBytes))))), httpx.SecurityHeaderOptions{HSTS: false}),
+		Handler:           httpx.Compress(httpx.SecurityHeaders(httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(httpx.Timeout(mux, httpx.DefaultRequestTimeout), httpx.DefaultMaxBodyBytes))))), httpx.SecurityHeaderOptions{HSTS: false})),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      60 * time.Second,
