@@ -118,15 +118,21 @@ func main() {
 		w.Write([]byte(`{"status":"ready"}`))
 	})
 
+	// Prometheus-format metrics for SLO/alerting
+	metrics := middleware.NewMetrics("bff")
+	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+
 	// API routes (with session validation + CSRF protection)
 	apiMux := http.NewServeMux()
 	apiMux.HandleFunc("GET /api/v1/me", sessionHandler.GetSession)
 	mux.Handle("/api/", middleware.CSRF(middleware.RequireSession(store)(apiMux)))
 
 	// Enterprise middleware chain (outermost first):
-	// Recovery -> RequestID -> AccessLog -> SecurityHeaders -> Handler
+	// Recovery -> RequestID -> AccessLog -> Metrics -> SecurityHeaders -> MaxBodyBytes -> Handler
 	var rootHandler http.Handler = mux
+	rootHandler = middleware.MaxBodyBytes(rootHandler, middleware.DefaultMaxBodyBytes)
 	rootHandler = middleware.SecurityHeadersWithOptions(rootHandler, cfg.IsSecure())
+	rootHandler = metrics.Instrument(rootHandler)
 	rootHandler = middleware.AccessLog(rootHandler)
 	rootHandler = middleware.RequestID(rootHandler)
 	rootHandler = middleware.Recovery(rootHandler)
