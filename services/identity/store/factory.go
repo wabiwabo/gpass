@@ -28,5 +28,6 @@ func NewDeletionStoreFromEnv() (DeletionStore, *sql.DB, error) {
 		db.Close()
 		return nil, nil, fmt.Errorf("ping postgres: %w", err)
 	}
+	configurePool(db)
 	return NewPostgresDeletionStore(db), db, nil
 }

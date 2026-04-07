@@ -39,6 +39,7 @@ func NewStoresFromEnv() (*Stores, error) {
 		db.Close()
 		return nil, fmt.Errorf("ping postgres: %w", err)
 	}
+	configurePool(db)
 	return &Stores{
 		Certificate: NewPostgresCertificateStore(db),
 		Request:     NewPostgresRequestStore(db),

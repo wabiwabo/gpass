@@ -40,6 +40,7 @@ func NewStoresFromEnv() (*Stores, error) {
 		db.Close()
 		return nil, fmt.Errorf("ping postgres: %w", err)
 	}
+	configurePool(db)
 	return &Stores{
 		Entity: NewPostgresEntityStore(db),
 		Role:   NewPostgresRoleStore(db),

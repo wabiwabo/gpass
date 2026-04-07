@@ -28,5 +28,6 @@ func NewConsentStoreFromEnv() (ConsentStore, *sql.DB, error) {
 		db.Close()
 		return nil, nil, fmt.Errorf("ping postgres: %w", err)
 	}
+	configurePool(db)
 	return NewPostgresConsentStore(db), db, nil
 }
