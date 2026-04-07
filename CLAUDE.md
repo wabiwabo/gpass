@@ -111,6 +111,37 @@ template, swap the service name, replace handlers. The middleware,
 endpoints, panic recovery, request IDs, structured logs, metrics,
 and security headers are all inherited from `golib/httpx`.
 
+### New Service Deploy Checklist
+
+A new backend service is not production-ready until ALL of these
+exist (anything missing is a gap that surfaces only during incidents):
+
+**Code (services/<name>/)**
+- [ ] `main.go` with the standard 8-layer middleware chain
+- [ ] `httpx.NewReadiness(...)` + `Drain()` before `server.Shutdown(ctx)`
+- [ ] `/health`, `/readyz`, `/metrics`, `/version` registered on mux
+- [ ] `store/factory.go` with `NewFromEnv()` Postgres-or-InMemory pattern
+- [ ] `store/pool.go` with `configurePool(db)` (or import shared)
+- [ ] `store/validate.go` with enterprise validators called by Postgres path
+- [ ] Integration tests behind `//go:build integration` build tag
+
+**Kubernetes (infrastructure/kubernetes/base/)**
+- [ ] `services.yaml` — Deployment + Service with probes pointing at /health and /readyz
+- [ ] `hpa.yaml` — HorizontalPodAutoscaler (2..6 replicas, 70% CPU)
+- [ ] `pdb.yaml` — PodDisruptionBudget with `minAvailable: 1`
+- [ ] `network-policy.yaml` — ingress rule + postgres egress allowlist entry
+- [ ] `terminationGracePeriodSeconds: 30` on the Deployment
+
+**Observability (infrastructure/prometheus/)**
+- [ ] `prometheus.yml` — service added to a `static_configs` job
+- [ ] `alerts.yml` — service inherits the fleet-wide HighErrorRate / HighLatency / PanicsObserved / DBPool*
+
+**Migration**
+- [ ] SQL migration in `infrastructure/db/migrations/NNN_*.sql` if it owns tables
+
+If `kustomize build infrastructure/kubernetes/overlays/production`
+fails, the most likely cause is one of the items above being missed.
+
 ### Security Architecture
 
 - Sessions: AES-256-GCM encrypted in Redis
