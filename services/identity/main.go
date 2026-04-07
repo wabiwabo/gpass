@@ -14,6 +14,7 @@ import (
 	"github.com/garudapass/gpass/services/identity/dukcapil"
 	"github.com/garudapass/gpass/services/identity/handler"
 	"github.com/garudapass/gpass/services/identity/otp"
+	"github.com/garudapass/gpass/services/identity/httpx"
 	"github.com/garudapass/gpass/services/identity/store"
 	"github.com/redis/go-redis/v9"
 )
@@ -95,7 +96,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           mux,
+		Handler:           httpx.Recover(mux),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,

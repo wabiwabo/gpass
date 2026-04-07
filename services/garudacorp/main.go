@@ -14,6 +14,7 @@ import (
 	"github.com/garudapass/gpass/services/garudacorp/config"
 	"github.com/garudapass/gpass/services/garudacorp/handler"
 	"github.com/garudapass/gpass/services/garudacorp/oss"
+	"github.com/garudapass/gpass/services/garudacorp/httpx"
 	"github.com/garudapass/gpass/services/garudacorp/store"
 )
 
@@ -85,7 +86,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           mux,
+		Handler:           httpx.Recover(mux),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,
