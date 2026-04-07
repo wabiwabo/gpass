@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/garudapass/gpass/services/ahu-sim/handler"
-	"github.com/garudapass/gpass/services/ahu-sim/httpx"
+	"github.com/garudapass/gpass/packages/golib/httpx"
 )
 
 func main() {

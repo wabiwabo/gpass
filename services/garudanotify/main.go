@@ -13,7 +13,7 @@ import (
 	"github.com/garudapass/gpass/services/garudanotify/channel"
 	"github.com/garudapass/gpass/services/garudanotify/config"
 	"github.com/garudapass/gpass/services/garudanotify/handler"
-	"github.com/garudapass/gpass/services/garudanotify/httpx"
+	"github.com/garudapass/gpass/packages/golib/httpx"
 )
 
 func main() {

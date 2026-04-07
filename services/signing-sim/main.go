@@ -12,7 +12,7 @@ import (
 
 	"github.com/garudapass/gpass/services/signing-sim/ca"
 	"github.com/garudapass/gpass/services/signing-sim/handler"
-	"github.com/garudapass/gpass/services/signing-sim/httpx"
+	"github.com/garudapass/gpass/packages/golib/httpx"
 )
 
 func main() {

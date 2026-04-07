@@ -14,7 +14,7 @@ import (
 	"github.com/garudapass/gpass/services/garudacorp/config"
 	"github.com/garudapass/gpass/services/garudacorp/handler"
 	"github.com/garudapass/gpass/services/garudacorp/oss"
-	"github.com/garudapass/gpass/services/garudacorp/httpx"
+	"github.com/garudapass/gpass/packages/golib/httpx"
 	"github.com/garudapass/gpass/services/garudacorp/store"
 )
 

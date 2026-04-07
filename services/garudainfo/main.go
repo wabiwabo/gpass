@@ -12,7 +12,7 @@ import (
 
 	"github.com/garudapass/gpass/services/garudainfo/config"
 	"github.com/garudapass/gpass/services/garudainfo/handler"
-	"github.com/garudapass/gpass/services/garudainfo/httpx"
+	"github.com/garudapass/gpass/packages/golib/httpx"
 	"github.com/garudapass/gpass/services/garudainfo/store"
 )
 

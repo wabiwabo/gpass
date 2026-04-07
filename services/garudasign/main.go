@@ -15,7 +15,7 @@ import (
 	"github.com/garudapass/gpass/services/garudasign/handler"
 	"github.com/garudapass/gpass/services/garudasign/signing"
 	"github.com/garudapass/gpass/services/garudasign/storage"
-	"github.com/garudapass/gpass/services/garudasign/httpx"
+	"github.com/garudapass/gpass/packages/golib/httpx"
 	"github.com/garudapass/gpass/services/garudasign/store"
 )
 

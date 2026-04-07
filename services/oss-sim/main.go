@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/garudapass/gpass/services/oss-sim/handler"
-	"github.com/garudapass/gpass/services/oss-sim/httpx"
+	"github.com/garudapass/gpass/packages/golib/httpx"
 )
 
 func main() {
