@@ -73,14 +73,8 @@ func NewInMemoryAuditStore() *InMemoryAuditStore {
 
 // Append validates and appends an audit event. The event is immutable once appended.
 func (s *InMemoryAuditStore) Append(event *AuditEvent) error {
-	if event.EventType == "" {
-		return fmt.Errorf("event_type is required")
-	}
-	if event.ActorID == "" {
-		return fmt.Errorf("actor_id is required")
-	}
-	if event.Action == "" {
-		return fmt.Errorf("action is required")
+	if err := ValidateEvent(event); err != nil {
+		return err
 	}
 
 	s.mu.Lock()

@@ -23,14 +23,8 @@ func NewPostgresAuditStore(db *sql.DB) *PostgresAuditStore {
 
 // Append inserts a new audit event. Append-only: no UPDATE or DELETE.
 func (s *PostgresAuditStore) Append(event *AuditEvent) error {
-	if event.EventType == "" {
-		return fmt.Errorf("event_type is required")
-	}
-	if event.ActorID == "" {
-		return fmt.Errorf("actor_id is required")
-	}
-	if event.Action == "" {
-		return fmt.Errorf("action is required")
+	if err := ValidateEvent(event); err != nil {
+		return err
 	}
 
 	if event.ActorType == "" {

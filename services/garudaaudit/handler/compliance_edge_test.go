@@ -108,10 +108,10 @@ func TestIngestEvent_FutureTimestamp(t *testing.T) {
 	}
 }
 
-// TestIngestEvent_VeryLongDescription tests boundary conditions with a very
-// long metadata description field to ensure the system handles large payloads.
+// TestIngestEvent_VeryLongDescription verifies that oversized metadata
+// values are rejected by the enterprise validator (DoS protection).
 func TestIngestEvent_VeryLongDescription(t *testing.T) {
-	h, s := setupAuditHandler()
+	h, _ := setupAuditHandler()
 
 	longDesc := strings.Repeat("A", 10000)
 	bodyStr := fmt.Sprintf(`{
@@ -127,20 +127,8 @@ func TestIngestEvent_VeryLongDescription(t *testing.T) {
 
 	h.IngestEvent(w, req)
 
-	if w.Code != http.StatusCreated {
-		t.Fatalf("expected 201 for long description, got %d: %s", w.Code, w.Body.String())
-	}
-
-	var event store.AuditEvent
-	json.NewDecoder(w.Body).Decode(&event)
-
-	// Verify the long value was stored and is retrievable
-	retrieved, err := s.GetByID(event.ID)
-	if err != nil {
-		t.Fatalf("GetByID: %v", err)
-	}
-	if len(retrieved.Metadata["description"]) != 10000 {
-		t.Errorf("expected description length 10000, got %d", len(retrieved.Metadata["description"]))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for oversized metadata, got %d: %s", w.Code, w.Body.String())
 	}
 }
 
