@@ -21,8 +21,8 @@ func NewPostgresConsentStore(db *sql.DB) *PostgresConsentStore {
 }
 
 func (s *PostgresConsentStore) Create(ctx context.Context, c *Consent) error {
-	if c.Fields == nil {
-		c.Fields = map[string]bool{}
+	if err := ValidateConsent(c); err != nil {
+		return err
 	}
 	fieldsJSON, err := json.Marshal(c.Fields)
 	if err != nil {

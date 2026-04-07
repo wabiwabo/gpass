@@ -20,7 +20,7 @@ func TestConcurrentCreate(t *testing.T) {
 			defer wg.Done()
 			c := &Consent{
 				UserID:          "user-concurrent",
-				ClientID:        "client-1",
+				ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 				Fields:          map[string]bool{"name": true},
 				DurationSeconds: 3600,
 			}
@@ -46,7 +46,7 @@ func TestConcurrentReadWrite(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		c := &Consent{
 			UserID:          "user-rw",
-			ClientID:        "client-1",
+			ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 			Fields:          map[string]bool{"name": true},
 			DurationSeconds: 3600,
 		}
@@ -70,7 +70,7 @@ func TestConcurrentReadWrite(t *testing.T) {
 			defer wg.Done()
 			c := &Consent{
 				UserID:          "user-rw",
-				ClientID:        "client-1",
+				ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 				Fields:          map[string]bool{"email": true},
 				DurationSeconds: 3600,
 			}
@@ -94,7 +94,7 @@ func TestConcurrentRevoke(t *testing.T) {
 
 	c := &Consent{
 		UserID:          "user-rev",
-		ClientID:        "client-1",
+		ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 3600,
 	}
@@ -139,7 +139,7 @@ func TestConcurrentExpireStale(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		c := &Consent{
 			UserID:          "user-expire",
-			ClientID:        "client-1",
+			ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 			Fields:          map[string]bool{"name": true},
 			DurationSeconds: 1,
 		}
@@ -185,7 +185,7 @@ func TestConcurrentListActiveByUserAndClient(t *testing.T) {
 		}
 		c := &Consent{
 			UserID:          "user-lac",
-			ClientID:        clientID,
+			ClientID:        clientID, ClientName: "Test Client", Purpose: "test",
 			Fields:          map[string]bool{"name": true},
 			DurationSeconds: 3600,
 		}

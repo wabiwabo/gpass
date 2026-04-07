@@ -12,14 +12,14 @@ func TestListActiveByUserAndClient(t *testing.T) {
 
 	// Create active consent
 	c1 := &Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"name": true}, DurationSeconds: 3600,
 	}
 	_ = s.Create(ctx, c1)
 
 	// Create and revoke another
 	c2 := &Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"email": true}, DurationSeconds: 3600,
 	}
 	_ = s.Create(ctx, c2)
@@ -27,7 +27,7 @@ func TestListActiveByUserAndClient(t *testing.T) {
 
 	// Create for different client
 	c3 := &Consent{
-		UserID: "user-1", ClientID: "client-2",
+		UserID: "user-1", ClientID: "client-2", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"phone": true}, DurationSeconds: 3600,
 	}
 	_ = s.Create(ctx, c3)
@@ -85,7 +85,7 @@ func TestExpireStaleSkipsRevoked(t *testing.T) {
 	ctx := context.Background()
 
 	c := &Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"name": true}, DurationSeconds: 1,
 	}
 	_ = s.Create(ctx, c)
@@ -121,7 +121,7 @@ func TestCreateAutoSetsTimestamps(t *testing.T) {
 
 	before := time.Now().UTC().Add(-1 * time.Second)
 	c := &Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"name": true}, DurationSeconds: 86400,
 	}
 	_ = s.Create(ctx, c)
@@ -144,7 +144,7 @@ func TestCreateUniqueIDs(t *testing.T) {
 	ids := make(map[string]bool)
 	for i := 0; i < 100; i++ {
 		c := &Consent{
-			UserID: "user-1", ClientID: "client-1",
+			UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 			Fields: map[string]bool{"name": true}, DurationSeconds: 3600,
 		}
 		_ = s.Create(ctx, c)
@@ -202,7 +202,7 @@ func TestListByUserReturnsCopies(t *testing.T) {
 	ctx := context.Background()
 
 	c := &Consent{
-		UserID: "user-copy", ClientID: "client-1",
+		UserID: "user-copy", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"name": true}, DurationSeconds: 3600,
 	}
 	_ = s.Create(ctx, c)
@@ -222,7 +222,7 @@ func TestListActiveByUserAndClientReturnsCopies(t *testing.T) {
 	ctx := context.Background()
 
 	c := &Consent{
-		UserID: "user-copy2", ClientID: "client-1",
+		UserID: "user-copy2", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"email": true}, DurationSeconds: 3600,
 	}
 	_ = s.Create(ctx, c)
@@ -246,7 +246,7 @@ func TestMultipleFieldsConsent(t *testing.T) {
 		"religion": false, "blood_type": false,
 	}
 	c := &Consent{
-		UserID: "user-multi", ClientID: "client-1",
+		UserID: "user-multi", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: fields, DurationSeconds: 3600,
 	}
 	_ = s.Create(ctx, c)
@@ -269,8 +269,7 @@ func TestConsentLifecycle(t *testing.T) {
 
 	// 1. Create
 	c := &Consent{
-		UserID: "user-lifecycle", ClientID: "client-1",
-		ClientName: "Test App", Purpose: "KYC",
+		UserID: "user-lifecycle", ClientID: "client-1", ClientName: "Test App", Purpose: "KYC",
 		Fields: map[string]bool{"name": true, "nik": true},
 		DurationSeconds: 3600,
 	}

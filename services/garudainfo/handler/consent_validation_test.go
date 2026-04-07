@@ -23,7 +23,7 @@ func TestGrantValidation(t *testing.T) {
 	}{
 		{
 			"missing_user_id",
-			`{"client_id":"c1","fields":["name"],"duration_days":30}`,
+			`{"client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`,
 			400, "invalid_request",
 		},
 		{
@@ -33,22 +33,22 @@ func TestGrantValidation(t *testing.T) {
 		},
 		{
 			"missing_fields",
-			`{"user_id":"u1","client_id":"c1","duration_days":30}`,
+			`{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","duration_days":30}`,
 			400, "invalid_request",
 		},
 		{
 			"empty_fields",
-			`{"user_id":"u1","client_id":"c1","fields":[],"duration_days":30}`,
+			`{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":[],"duration_days":30}`,
 			400, "invalid_request",
 		},
 		{
 			"zero_duration",
-			`{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":0}`,
+			`{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":0}`,
 			400, "invalid_request",
 		},
 		{
 			"negative_duration",
-			`{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":-1}`,
+			`{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":-1}`,
 			400, "invalid_request",
 		},
 		{
@@ -99,7 +99,7 @@ func TestGrantSuccess(t *testing.T) {
 
 func TestGrantDurationCalculation(t *testing.T) {
 	h := newConsentHandler()
-	body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":365}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":365}`
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	rr := httptest.NewRecorder()
 	h.Grant(rr, req)
@@ -116,7 +116,7 @@ func TestGrantDurationCalculation(t *testing.T) {
 
 func TestGrantResponseHeaders(t *testing.T) {
 	h := newConsentHandler()
-	body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":30}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	rr := httptest.NewRecorder()
 	h.Grant(rr, req)
@@ -149,8 +149,8 @@ func TestListSuccess(t *testing.T) {
 
 	// Grant two consents
 	for _, body := range []string{
-		`{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":30}`,
-		`{"user_id":"u1","client_id":"c2","fields":["email"],"duration_days":60}`,
+		`{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`,
+		`{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c2","fields":["email"],"duration_days":60}`,
 	} {
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 		rr := httptest.NewRecorder()
@@ -260,7 +260,7 @@ func TestRevokeAlreadyRevoked(t *testing.T) {
 	h := newConsentHandler()
 
 	// Grant
-	body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":30}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	rr := httptest.NewRecorder()
 	h.Grant(rr, req)
@@ -290,7 +290,7 @@ func TestGrantListRevokeFlow(t *testing.T) {
 	h := newConsentHandler()
 
 	// Grant
-	body := `{"user_id":"u1","client_id":"c1","fields":["name","email"],"duration_days":90}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name","email"],"duration_days":90}`
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	rr := httptest.NewRecorder()
 	h.Grant(rr, req)
@@ -336,7 +336,7 @@ func TestGrantMultipleConsentsForSameUser(t *testing.T) {
 	h := newConsentHandler()
 
 	for i := 0; i < 5; i++ {
-		body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":30}`
+		body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 		rr := httptest.NewRecorder()
 		h.Grant(rr, req)
@@ -358,8 +358,8 @@ func TestGrantMultipleConsentsForSameUser(t *testing.T) {
 func TestGrantIsolatesDifferentUsers(t *testing.T) {
 	h := newConsentHandler()
 
-	body1 := `{"user_id":"alice","client_id":"c1","fields":["name"],"duration_days":30}`
-	body2 := `{"user_id":"bob","client_id":"c1","fields":["email"],"duration_days":30}`
+	body1 := `{"user_id":"alice","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
+	body2 := `{"user_id":"bob","client_name":"Test App","purpose":"test","client_id":"c1","fields":["email"],"duration_days":30}`
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body1))
 	rr := httptest.NewRecorder()

@@ -91,7 +91,7 @@ func TestGetPerson_InactiveConsent(t *testing.T) {
 
 	consent := &store.Consent{
 		UserID:          "user-1",
-		ClientID:        "client-1",
+		ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 86400,
 	}

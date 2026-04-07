@@ -12,8 +12,7 @@ func TestCreateAndGet(t *testing.T) {
 
 	c := &Consent{
 		UserID:          "user-1",
-		ClientID:        "client-1",
-		ClientName:      "Test App",
+		ClientID:        "client-1", ClientName:      "Test App",
 		Purpose:         "KYC verification",
 		Fields:          map[string]bool{"name": true, "dob": true},
 		DurationSeconds: 3600,
@@ -61,7 +60,7 @@ func TestRevoke(t *testing.T) {
 
 	c := &Consent{
 		UserID:          "user-1",
-		ClientID:        "client-1",
+		ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 3600,
 	}
@@ -86,7 +85,7 @@ func TestRevokeAlreadyRevoked(t *testing.T) {
 
 	c := &Consent{
 		UserID:          "user-1",
-		ClientID:        "client-1",
+		ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 3600,
 	}
@@ -106,14 +105,14 @@ func TestListByUser(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		_ = s.Create(ctx, &Consent{
 			UserID:          "user-1",
-			ClientID:        "client-1",
+			ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 			Fields:          map[string]bool{"name": true},
 			DurationSeconds: 3600,
 		})
 	}
 	_ = s.Create(ctx, &Consent{
 		UserID:          "user-2",
-		ClientID:        "client-1",
+		ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 3600,
 	})
@@ -144,7 +143,7 @@ func TestExpireStale(t *testing.T) {
 	// Create a consent with a very short duration
 	c := &Consent{
 		UserID:          "user-1",
-		ClientID:        "client-1",
+		ClientID:        "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 1, // 1 second
 	}

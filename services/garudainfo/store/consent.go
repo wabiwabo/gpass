@@ -68,6 +68,9 @@ func copyConsent(c *Consent) *Consent {
 
 // Create stores a new consent, auto-setting ID, Status, GrantedAt, and ExpiresAt.
 func (s *InMemoryConsentStore) Create(_ context.Context, c *Consent) error {
+	if err := ValidateConsent(c); err != nil {
+		return err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -68,7 +68,7 @@ func TestGetPersonRevokedConsent(t *testing.T) {
 	ctx := context.Background()
 
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"name": true}, DurationSeconds: 3600,
 	}
 	_ = s.Create(ctx, c)
@@ -93,7 +93,7 @@ func TestGetPersonExpiredConsent(t *testing.T) {
 	ctx := context.Background()
 
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{"name": true}, DurationSeconds: 1,
 	}
 	_ = s.Create(ctx, c)
@@ -115,7 +115,7 @@ func TestGetPersonFiltersToGrantedFields(t *testing.T) {
 	ctx := context.Background()
 
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true, "email": true, "phone": false},
 		DurationSeconds: 3600,
 	}
@@ -162,7 +162,7 @@ func TestGetPersonFieldNotInUpstream(t *testing.T) {
 
 	// Consent grants name and email, but provider only has name
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true, "email": true},
 		DurationSeconds: 3600,
 	}
@@ -193,7 +193,7 @@ func TestGetPersonAllFieldsGranted(t *testing.T) {
 	ctx := context.Background()
 
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{
 			"name": true, "email": true, "phone": true, "nik": true, "dob": true,
 		},
@@ -218,7 +218,7 @@ func TestGetPersonNoFieldsGranted(t *testing.T) {
 	ctx := context.Background()
 
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields: map[string]bool{
 			"name": false, "email": false,
 		},
@@ -243,7 +243,7 @@ func TestGetPersonFieldValues(t *testing.T) {
 	ctx := context.Background()
 
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 3600,
 	}
@@ -273,7 +273,7 @@ func TestGetPersonResponseHeaders(t *testing.T) {
 	ctx := context.Background()
 
 	c := &store.Consent{
-		UserID: "user-1", ClientID: "client-1",
+		UserID: "user-1", ClientID: "client-1", ClientName: "Test Client", Purpose: "test",
 		Fields:          map[string]bool{"name": true},
 		DurationSeconds: 3600,
 	}

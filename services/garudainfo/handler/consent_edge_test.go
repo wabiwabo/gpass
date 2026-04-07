@@ -26,7 +26,7 @@ func TestGrant_InvalidJSON(t *testing.T) {
 func TestGrant_MissingUserID(t *testing.T) {
 	h := NewConsentHandler(store.NewInMemoryConsentStore())
 
-	body := `{"client_id":"c1","fields":["name"],"duration_days":30}`
+	body := `{"client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 	rec := httptest.NewRecorder()
 	h.Grant(rec, req)
@@ -52,7 +52,7 @@ func TestGrant_MissingClientID(t *testing.T) {
 func TestGrant_EmptyFields(t *testing.T) {
 	h := NewConsentHandler(store.NewInMemoryConsentStore())
 
-	body := `{"user_id":"u1","client_id":"c1","fields":[],"duration_days":30}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":[],"duration_days":30}`
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 	rec := httptest.NewRecorder()
 	h.Grant(rec, req)
@@ -65,7 +65,7 @@ func TestGrant_EmptyFields(t *testing.T) {
 func TestGrant_ZeroDuration(t *testing.T) {
 	h := NewConsentHandler(store.NewInMemoryConsentStore())
 
-	body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":0}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":0}`
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 	rec := httptest.NewRecorder()
 	h.Grant(rec, req)
@@ -78,7 +78,7 @@ func TestGrant_ZeroDuration(t *testing.T) {
 func TestGrant_NegativeDuration(t *testing.T) {
 	h := NewConsentHandler(store.NewInMemoryConsentStore())
 
-	body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":-1}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":-1}`
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 	rec := httptest.NewRecorder()
 	h.Grant(rec, req)
@@ -111,7 +111,7 @@ func TestGrant_MultipleFields(t *testing.T) {
 func TestGrant_ResponseHeaders(t *testing.T) {
 	h := NewConsentHandler(store.NewInMemoryConsentStore())
 
-	body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":30}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 	rec := httptest.NewRecorder()
 	h.Grant(rec, req)
@@ -159,7 +159,7 @@ func TestRevoke_AlreadyRevoked(t *testing.T) {
 	h := NewConsentHandler(s)
 
 	// Create.
-	body := `{"user_id":"u1","client_id":"c1","fields":["name"],"duration_days":30}`
+	body := `{"user_id":"u1","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 	createReq := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 	createRec := httptest.NewRecorder()
 	h.Grant(createRec, createReq)
@@ -243,7 +243,7 @@ func TestGrant_MultipleConsentsForSameUser(t *testing.T) {
 	h := NewConsentHandler(s)
 
 	for i := 0; i < 3; i++ {
-		body := `{"user_id":"multi-user","client_id":"client-` + string(rune('A'+i)) + `","fields":["name"],"duration_days":30}`
+		body := `{"user_id":"multi-user","client_name":"App","purpose":"test","client_id":"client-` + string(rune('A'+i)) + `","fields":["name"],"duration_days":30}`
 		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 		rec := httptest.NewRecorder()
 		h.Grant(rec, req)
@@ -270,13 +270,13 @@ func TestList_DifferentUsers(t *testing.T) {
 
 	// User A gets 2 consents.
 	for i := 0; i < 2; i++ {
-		body := `{"user_id":"user-a","client_id":"c1","fields":["name"],"duration_days":30}`
+		body := `{"user_id":"user-a","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 		h.Grant(httptest.NewRecorder(), req)
 	}
 
 	// User B gets 1 consent.
-	body := `{"user_id":"user-b","client_id":"c1","fields":["name"],"duration_days":30}`
+	body := `{"user_id":"user-b","client_name":"Test App","purpose":"test","client_id":"c1","fields":["name"],"duration_days":30}`
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(body))
 	h.Grant(httptest.NewRecorder(), req)
 
