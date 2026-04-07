@@ -526,3 +526,156 @@ spec:
     requests:
       storage: 10Gi
   storageClassName: standard
+---
+# garudaaudit — Immutable audit trail (PP 71/2019, port 4010)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garudaaudit
+  namespace: garudapass
+  labels:
+    app: garudaaudit
+    monitoring: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: garudaaudit
+  template:
+    metadata:
+      labels:
+        app: garudaaudit
+        monitoring: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: garudaaudit
+          image: garudapass/garudaaudit:latest
+          ports:
+            - containerPort: 4010
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: GARUDAAUDIT_PORT
+              value: "4010"
+            - name: GARUDAAUDIT_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: url
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4010
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 4010
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garudaaudit
+  namespace: garudapass
+  labels:
+    monitoring: "true"
+spec:
+  selector:
+    app: garudaaudit
+  ports:
+    - port: 4010
+      targetPort: 4010
+      name: http
+---
+# garudanotify — Email/SMS notifications (port 4011)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garudanotify
+  namespace: garudapass
+  labels:
+    app: garudanotify
+    monitoring: "true"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: garudanotify
+  template:
+    metadata:
+      labels:
+        app: garudanotify
+        monitoring: "true"
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: garudanotify
+          image: garudapass/garudanotify:latest
+          ports:
+            - containerPort: 4011
+              name: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: GARUDANOTIFY_PORT
+              value: "4011"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4011
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 4011
+            initialDelaySeconds: 3
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garudanotify
+  namespace: garudapass
+  labels:
+    monitoring: "true"
+spec:
+  selector:
+    app: garudanotify
+  ports:
+    - port: 4011
+      targetPort: 4011
+      name: http
