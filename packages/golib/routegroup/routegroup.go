@@ -28,9 +28,36 @@ func New(mux *http.ServeMux, prefix string, middleware ...Middleware) *Group {
 }
 
 // Handle registers a handler with the group's prefix and middleware.
+//
+// pattern may use the Go 1.22+ method-routing syntax ("GET /users").
+// In that case the prefix is inserted between the method and the path:
+//
+//	g := New(mux, "/api")
+//	g.Handle("GET /users", h)   // → mux.Handle("GET /api/users", h)
+//
+// Without a method prefix, the group prefix is simply prepended.
 func (g *Group) Handle(pattern string, handler http.Handler) {
 	wrapped := g.applyMiddleware(handler)
-	g.mux.Handle(g.prefix+pattern, wrapped)
+	g.mux.Handle(g.qualify(pattern), wrapped)
+}
+
+// qualify inserts the group prefix into a pattern, handling Go 1.22+
+// method-routed patterns ("VERB /path") correctly.
+func (g *Group) qualify(pattern string) string {
+	if i := strings.Index(pattern, " "); i > 0 && isHTTPMethod(pattern[:i]) {
+		return pattern[:i+1] + g.prefix + pattern[i+1:]
+	}
+	return g.prefix + pattern
+}
+
+// isHTTPMethod returns true for the standard verbs the net/http ServeMux
+// recognises in method-routed patterns.
+func isHTTPMethod(s string) bool {
+	switch s {
+	case "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "TRACE":
+		return true
+	}
+	return false
 }
 
 // HandleFunc registers a handler function.
