@@ -4,16 +4,52 @@ groups:
       - alert: HighErrorRate
         expr: >
           (
-            rate(http_requests_total{status_code=~"5.."}[5m])
+            sum by (service) (rate(http_requests_total{class="5xx"}[5m]))
             /
-            rate(http_requests_total[5m])
+            sum by (service) (rate(http_requests_total[5m]))
           ) > 0.01
         for: 5m
         labels:
           severity: critical
         annotations:
           summary: "Error rate > 1% for {{ $labels.service }}"
-          description: "Service {{ $labels.service }} has error rate {{ $value | humanizePercentage }}"
+          description: "Service {{ $labels.service }} has 5xx rate {{ $value | humanizePercentage }}"
+
+      - alert: PanicsObserved
+        expr: increase(http_panics_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Panic recovered in {{ $labels.service }}"
+          description: "Recover middleware caught {{ $value }} panic(s) in last 10m. Investigate logs."
+
+      - alert: DBPoolExhaustion
+        expr: rate(db_pool_wait_count[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DB pool exhaustion in {{ $labels.service }}"
+          description: "Requests are waiting on DB connections. Consider increasing DB_MAX_OPEN_CONNS."
+
+      - alert: DBPoolNearMax
+        expr: db_pool_in_use / db_pool_open_connections > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "DB pool >90% utilized in {{ $labels.service }}"
+          description: "in_use/open ratio is {{ $value | humanizePercentage }}; pool exhaustion imminent."
+
+      - alert: GoroutineLeak
+        expr: go_goroutines > 5000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Goroutine count > 5000 in {{ $labels.service }}"
+          description: "Goroutine count is {{ $value }} — possible leak (handler not returning?)."
 
       - alert: HighLatency
         expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 2

@@ -15,6 +15,8 @@ scrape_configs:
           - "garudacorp:4006"
           - "garudasign:4007"
           - "garudaportal:4009"
+          - "garudaaudit:4010"
+          - "garudanotify:4011"
     metrics_path: /metrics
     scrape_interval: 10s
 
