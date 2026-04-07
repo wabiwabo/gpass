@@ -40,7 +40,7 @@ func TestMiddleware_ImplicitWriteHeaderViaWrite(t *testing.T) {
 
 // TestMiddleware_TimesOut pins the ctx.Done branch: a slow handler must
 // be interrupted with a 504 problem+json response.
-func TestMiddleware_TimesOut(t *testing.T) {
+func TestMiddleware_TimesOut_Cov(t *testing.T) {
 	mw := Middleware(20 * time.Millisecond)
 	h := mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		select {
