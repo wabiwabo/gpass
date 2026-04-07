@@ -167,3 +167,5 @@ jobs:
           echo "Dev overlay: Valid"
           kustomize build infrastructure/kubernetes/overlays/staging/ > /dev/null
           echo "Staging overlay: Valid"
+          kustomize build infrastructure/kubernetes/overlays/production/ > /dev/null
+          echo "Production overlay: Valid"
