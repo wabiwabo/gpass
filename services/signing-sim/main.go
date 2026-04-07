@@ -51,6 +51,9 @@ func main() {
 		fmt.Fprint(w, `{"status":"ok","service":"signing-sim"}`)
 	})
 
+	readiness := httpx.NewReadiness("signing-sim", nil)
+	mux.HandleFunc("GET /readyz", readiness.Handler())
+
 	// Prometheus-format metrics
 	metrics := httpx.NewMetrics("signing-sim")
 	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
@@ -85,6 +88,10 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	readiness.Drain()
+	slog.Info("draining: /readyz now returns 503", "drain_seconds", 10)
+	time.Sleep(10 * time.Second)
 
 	if err := server.Shutdown(ctx); err != nil {
 		slog.Error("graceful shutdown failed", "error", err)
