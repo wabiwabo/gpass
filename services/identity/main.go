@@ -94,9 +94,13 @@ func main() {
 	})
 	mux.HandleFunc("GET /readyz", store.ReadinessHandler(delDB, "identity"))
 
+	// Prometheus-format metrics for SLO/alerting
+	metrics := httpx.NewMetrics("identity")
+	mux.HandleFunc("GET /metrics", metrics.Handler(delDB))
+
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, 25*1024*1024)))),
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, 25*1024*1024))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,

@@ -91,6 +91,10 @@ func main() {
 	})
 	mux.HandleFunc("GET /readyz", store.ReadinessHandler(stores.DB, "garudasign"))
 
+	// Prometheus-format metrics for SLO/alerting
+	metrics := httpx.NewMetrics("garudasign")
+	mux.HandleFunc("GET /metrics", metrics.Handler(stores.DB))
+
 	// Certificate routes
 	mux.HandleFunc("POST /api/v1/sign/certificates/request", certHandler.RequestCertificate)
 	mux.HandleFunc("GET /api/v1/sign/certificates", certHandler.ListCertificates)
@@ -103,7 +107,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes)))),
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      60 * time.Second,

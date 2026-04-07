@@ -57,6 +57,10 @@ func main() {
 	})
 	mux.HandleFunc("GET /readyz", store.ReadinessHandler(db, "garudaaudit"))
 
+	// Prometheus-format metrics for SLO/alerting
+	metrics := httpx.NewMetrics("garudaaudit")
+	mux.HandleFunc("GET /metrics", metrics.Handler(db))
+
 	// Audit event routes
 	mux.HandleFunc("POST /api/v1/audit/events", auditHandler.IngestEvent)
 	mux.HandleFunc("GET /api/v1/audit/events", auditHandler.QueryEvents)
@@ -67,7 +71,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes)))),
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      60 * time.Second,

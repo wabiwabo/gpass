@@ -37,7 +37,7 @@ func AccessLog(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip k8s probes — they hit /health and /readyz hundreds of
 		// times per minute and would drown out real traffic in logs.
-		if r.URL.Path == "/health" || r.URL.Path == "/readyz" {
+		if r.URL.Path == "/health" || r.URL.Path == "/readyz" || r.URL.Path == "/metrics" {
 			h.ServeHTTP(w, r)
 			return
 		}

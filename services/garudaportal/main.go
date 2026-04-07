@@ -54,6 +54,10 @@ func main() {
 		fmt.Fprint(w, `{"status":"ok","service":"garudaportal"}`)
 	})
 
+	// Prometheus-format metrics for SLO/alerting
+	metrics := httpx.NewMetrics("garudaportal")
+	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+
 	// App management
 	mux.HandleFunc("POST /api/v1/portal/apps", appHandler.CreateApp)
 	mux.HandleFunc("GET /api/v1/portal/apps", appHandler.ListApps)
@@ -78,7 +82,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes)))),
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,

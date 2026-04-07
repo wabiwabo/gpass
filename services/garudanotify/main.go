@@ -48,13 +48,17 @@ func main() {
 		fmt.Fprint(w, `{"status":"ok","service":"garudanotify"}`)
 	})
 
+	// Prometheus-format metrics for SLO/alerting
+	metrics := httpx.NewMetrics("garudanotify")
+	mux.HandleFunc("GET /metrics", metrics.Handler(nil))
+
 	// Notification routes
 	mux.HandleFunc("POST /api/v1/notify/otp", notifyHandler.SendOTP)
 	mux.HandleFunc("POST /api/v1/notify/alert", notifyHandler.SendAlert)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes)))),
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,

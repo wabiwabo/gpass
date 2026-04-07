@@ -60,6 +60,10 @@ func main() {
 	})
 	mux.HandleFunc("GET /readyz", store.ReadinessHandler(db, "garudainfo"))
 
+	// Prometheus-format metrics for SLO/alerting
+	metrics := httpx.NewMetrics("garudainfo")
+	mux.HandleFunc("GET /metrics", metrics.Handler(db))
+
 	// Consent endpoints
 	mux.HandleFunc("POST /api/v1/garudainfo/consents", consentHandler.Grant)
 	mux.HandleFunc("GET /api/v1/garudainfo/consents", consentHandler.List)
@@ -70,7 +74,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpx.RequestID(httpx.AccessLog(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes)))),
+		Handler:           httpx.RequestID(httpx.AccessLog(metrics.Instrument(httpx.Recover(httpx.MaxBodyBytes(mux, httpx.DefaultMaxBodyBytes))))),
 		ReadTimeout:       15 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,
