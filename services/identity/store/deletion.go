@@ -56,8 +56,8 @@ func NewInMemoryDeletionStore() *InMemoryDeletionStore {
 
 // Create stores a new deletion request after validating the reason.
 func (s *InMemoryDeletionStore) Create(req *DeletionRequest) error {
-	if !ValidReasons[req.Reason] {
-		return ErrInvalidReason
+	if err := ValidateDeletionRequest(req); err != nil {
+		return err
 	}
 
 	s.mu.Lock()
@@ -104,6 +104,9 @@ func (s *InMemoryDeletionStore) ListByUser(userID string) ([]*DeletionRequest, e
 
 // UpdateStatus updates the status, completion time, and deleted data categories.
 func (s *InMemoryDeletionStore) UpdateStatus(id, status string, completedAt *time.Time, deletedData []string) error {
+	if err := ValidateStatusUpdate(status, deletedData); err != nil {
+		return err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

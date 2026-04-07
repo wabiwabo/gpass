@@ -123,7 +123,7 @@ func TestDeletionCopyIsolation(t *testing.T) {
 	req := &DeletionRequest{UserID: "u1", Reason: "user_request"}
 	_ = s.Create(req)
 	now := time.Now()
-	_ = s.UpdateStatus(req.ID, "COMPLETED", &now, []string{"a", "b"})
+	_ = s.UpdateStatus(req.ID, "COMPLETED", &now, []string{"personal_info", "biometric"})
 
 	got, _ := s.GetByID(req.ID)
 	got.DeletedData[0] = "TAMPERED"

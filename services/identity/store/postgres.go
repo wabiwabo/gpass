@@ -19,8 +19,8 @@ func NewPostgresDeletionStore(db *sql.DB) *PostgresDeletionStore {
 }
 
 func (s *PostgresDeletionStore) Create(req *DeletionRequest) error {
-	if !ValidReasons[req.Reason] {
-		return ErrInvalidReason
+	if err := ValidateDeletionRequest(req); err != nil {
+		return err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -79,6 +79,9 @@ func (s *PostgresDeletionStore) ListByUser(userID string) ([]*DeletionRequest, e
 }
 
 func (s *PostgresDeletionStore) UpdateStatus(id, status string, completedAt *time.Time, deletedData []string) error {
+	if err := ValidateStatusUpdate(status, deletedData); err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
