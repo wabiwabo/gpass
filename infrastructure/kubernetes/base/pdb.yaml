@@ -19,3 +19,83 @@ spec:
   selector:
     matchLabels:
       app: keycloak
+---
+# Backend services PDBs — protect against simultaneous eviction during
+# node drains. minAvailable: 1 with replicas: 2 means at least one pod
+# is always serving traffic, even mid-cluster-upgrade.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: identity-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: identity
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: garudainfo-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: garudainfo
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: garudacorp-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: garudacorp
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: garudasign-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: garudasign
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: garudaportal-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: garudaportal
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: garudaaudit-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: garudaaudit
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: garudanotify-pdb
+  namespace: garudapass
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: garudanotify

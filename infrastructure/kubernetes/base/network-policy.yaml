@@ -137,7 +137,7 @@ spec:
     matchExpressions:
       - key: app
         operator: In
-        values: [identity, garudainfo, garudacorp, garudasign, garudaportal]
+        values: [identity, garudainfo, garudacorp, garudasign, garudaportal, garudaaudit]
   policyTypes:
     - Egress
   egress:
