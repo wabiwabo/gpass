@@ -27,8 +27,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create stores
-	auditStore := store.NewInMemoryAuditStore()
+	// Create stores — Postgres if DATABASE_URL set, in-memory fallback for dev
+	auditStore, db, err := store.NewFromEnv()
+	if err != nil {
+		slog.Error("failed to initialize audit store", "error", err)
+		os.Exit(1)
+	}
+	if db != nil {
+		defer db.Close()
+		slog.Info("audit store: postgres-backed (12factor compliant, PP 71/2019 retention)")
+	} else {
+		slog.Warn("audit store: in-memory (DEV ONLY — data lost on restart, NOT PP 71/2019 compliant)")
+	}
 
 	// Create handlers
 	auditHandler := handler.NewAuditHandler(auditStore)

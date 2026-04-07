@@ -9,11 +9,11 @@ import (
 
 // StatsHandler provides audit statistics.
 type StatsHandler struct {
-	store *store.InMemoryAuditStore
+	store store.AuditStore
 }
 
 // NewStatsHandler creates a new StatsHandler.
-func NewStatsHandler(s *store.InMemoryAuditStore) *StatsHandler {
+func NewStatsHandler(s store.AuditStore) *StatsHandler {
 	return &StatsHandler{store: s}
 }
 

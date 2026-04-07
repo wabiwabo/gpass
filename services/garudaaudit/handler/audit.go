@@ -12,11 +12,11 @@ import (
 
 // AuditHandler handles audit log HTTP endpoints.
 type AuditHandler struct {
-	store *store.InMemoryAuditStore
+	store store.AuditStore
 }
 
 // NewAuditHandler creates a new AuditHandler.
-func NewAuditHandler(s *store.InMemoryAuditStore) *AuditHandler {
+func NewAuditHandler(s store.AuditStore) *AuditHandler {
 	return &AuditHandler{store: s}
 }
 

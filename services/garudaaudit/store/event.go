@@ -31,6 +31,9 @@ type AuditStore interface {
 	// Append adds an audit event. Events are append-only — no updates or deletes.
 	Append(event *AuditEvent) error
 
+	// GetByID retrieves a single event by its ID.
+	GetByID(id string) (*AuditEvent, error)
+
 	// Query retrieves events matching the filter criteria.
 	Query(filter AuditFilter) ([]*AuditEvent, error)
 
