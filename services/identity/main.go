@@ -64,7 +64,17 @@ func main() {
 	})
 
 	// Deletion handler (UU PDP compliance)
-	deletionStore := store.NewInMemoryDeletionStore()
+	deletionStore, delDB, err := store.NewDeletionStoreFromEnv()
+	if err != nil {
+		slog.Error("failed to initialize deletion store", "error", err)
+		os.Exit(1)
+	}
+	if delDB != nil {
+		defer delDB.Close()
+		slog.Info("deletion store: postgres-backed (12factor compliant, UU PDP No. 27/2022)")
+	} else {
+		slog.Warn("deletion store: in-memory (DEV ONLY — NOT 12factor compliant)")
+	}
 	auditEmitter := &logAuditEmitter{}
 	deletionHandler := handler.NewDeletionHandler(deletionStore, auditEmitter)
 

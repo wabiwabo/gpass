@@ -35,7 +35,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	consentStore := store.NewInMemoryConsentStore()
+	consentStore, db, err := store.NewConsentStoreFromEnv()
+	if err != nil {
+		slog.Error("failed to initialize consent store", "error", err)
+		os.Exit(1)
+	}
+	if db != nil {
+		defer db.Close()
+		slog.Info("consent store: postgres-backed (12factor compliant, UU PDP No. 27/2022)")
+	} else {
+		slog.Warn("consent store: in-memory (DEV ONLY — NOT 12factor compliant)")
+	}
 	consentHandler := handler.NewConsentHandler(consentStore)
 	personHandler := handler.NewPersonHandler(consentStore, &staticUserDataProvider{})
 

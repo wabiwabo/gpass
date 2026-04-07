@@ -31,9 +31,20 @@ func main() {
 	}
 
 	// Create stores
-	certStore := store.NewInMemoryCertificateStore()
-	reqStore := store.NewInMemoryRequestStore()
-	docStore := store.NewInMemoryDocumentStore()
+	stores, err := store.NewStoresFromEnv()
+	if err != nil {
+		slog.Error("failed to initialize stores", "error", err)
+		os.Exit(1)
+	}
+	if stores.DB != nil {
+		defer stores.DB.Close()
+		slog.Info("stores: postgres-backed (12factor compliant, ETSI EN 319 142)")
+	} else {
+		slog.Warn("stores: in-memory (DEV ONLY — NOT 12factor compliant)")
+	}
+	certStore := stores.Certificate
+	reqStore := stores.Request
+	docStore := stores.Document
 
 	// Create file storage
 	fileStorage := storage.NewFileStorage(cfg.DocumentStoragePath)

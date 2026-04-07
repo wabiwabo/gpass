@@ -34,9 +34,20 @@ func main() {
 	)
 
 	// Stores
-	entityStore := store.NewInMemoryEntityStore()
-	roleStore := store.NewInMemoryRoleStore()
-	uboStore := store.NewInMemoryUBOStore()
+	stores, err := store.NewStoresFromEnv()
+	if err != nil {
+		slog.Error("failed to initialize stores", "error", err)
+		os.Exit(1)
+	}
+	if stores.DB != nil {
+		defer stores.DB.Close()
+		slog.Info("stores: postgres-backed (12factor compliant, PP 13/2018)")
+	} else {
+		slog.Warn("stores: in-memory (DEV ONLY — NOT 12factor compliant)")
+	}
+	entityStore := stores.Entity
+	roleStore := stores.Role
+	uboStore := stores.UBO
 
 	// Clients
 	ahuClient := ahu.NewClient(cfg.AHUURL, cfg.AHUAPIKey, cfg.AHUTimeout)
